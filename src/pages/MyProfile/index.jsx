@@ -4,6 +4,7 @@ import HomeThumnailCard from "@/components/HomeThumnailCard";
 import BucketCard from "@/components/BucketCard";
 import Input from "@/components/Input/Input";
 import SubmitButton from "@/components/SubmitButton/SubmitButton";
+import BucketChangeModal from "@/components/BucketChangeModal";
 
 import {
   Container,
@@ -28,6 +29,9 @@ import {
 
 export default function MyProfile() {
   const {
+    date,
+    valueData,
+    imgData,
     completeCount,
     pregressCount,
     activeNumber,
@@ -41,10 +45,14 @@ export default function MyProfile() {
     errors,
     isLoading,
     dummyObserver,
+    bucketChangeModal,
+    calanderModalState,
+    setCalanderModalState,
+    setDate,
     profileCardObserver,
     handleChange,
-    handleEditModalClose,
-    handleProfileEditModalState,
+    handleProfileModalClose,
+    handleProfileModalState,
     handleMenuClick,
     handleCardDetailView,
     handleCardDetailModalClose,
@@ -55,12 +63,31 @@ export default function MyProfile() {
     handleDetailHeartClick,
     handleProfileImgChange,
     handleNicknameRepeatCheck,
+    handleImageUpload,
+    handleValueChange,
+    handleBucketChangeSubmit,
+    handleBucketChangeModalState,
+    handleBucketChangeModalAndSetBoardId,
     profileEditReq,
   } = useMyProfile();
   const contentMaxViewLength = 18;
   const titleMaxViewLength = 15;
   return (
     <>
+      {bucketChangeModal && (
+        <BucketChangeModal
+          date={date}
+          setDate={setDate}
+          valueData={valueData}
+          imgData={imgData}
+          calanderModalState={calanderModalState}
+          setCalanderModalState={setCalanderModalState}
+          handleValueChange={handleValueChange}
+          handleImageUpload={handleImageUpload}
+          handleBucketChangeModalState={handleBucketChangeModalState}
+          handleBucketChangeSubmit={handleBucketChangeSubmit}
+        />
+      )}
       {detailModal && (
         <BucketCard
           boardId={profileCardDetailData.boardId}
@@ -79,6 +106,12 @@ export default function MyProfile() {
           scrapCount={profileCardDetailData.scrapCount}
           putModalOptions={activeNumber === 0 && true}
           isCompleted={profileCardDetailData.isCompleted}
+          date={date}
+          setDate={setDate}
+          valueData={valueData}
+          imgData={imgData}
+          calanderModalState={calanderModalState}
+          setCalanderModalState={setCalanderModalState}
           modalCloseHandle={handleCardDetailModalClose}
           handleHeartClick={
             activeNumber === 0
@@ -93,6 +126,10 @@ export default function MyProfile() {
             activeNumber === 0 &&
             handleMyDetailBucketComplete(profileCardDetailData.boardId)
           }
+          handleBucketChangeModalState={handleBucketChangeModalState}
+          handleValueChange={handleValueChange}
+          handleImageUpload={handleImageUpload}
+          handleBucketChangeSubmit={handleBucketChangeSubmit}
         />
       )}
       {profileEditModal && (
@@ -140,14 +177,14 @@ export default function MyProfile() {
                 {errors.nicknameErrorMsg && <p>{errors.nicknameErrorMsg}</p>}
               </InputBox>
               <ButtonBox>
-                <ProfileEditCansleButton onClick={handleEditModalClose}>
+                <ProfileEditCansleButton onClick={handleProfileModalClose}>
                   취소
                 </ProfileEditCansleButton>
                 <SubmitButton width={"190px"} value={"확인"} />
               </ButtonBox>
             </form>
           </EditModal>
-          <ModalCloseArea onClick={handleEditModalClose} />
+          <ModalCloseArea onClick={handleProfileModalClose} />
         </EditModalOuter>
       )}
       <Container>
@@ -164,7 +201,7 @@ export default function MyProfile() {
           </div>
           <div>
             <h2>{JSON.parse(localStorage.getItem("userNickname"))}</h2>
-            <EditProfileButton onClick={handleProfileEditModalState} />
+            <EditProfileButton onClick={handleProfileModalState} />
           </div>
         </ProfileViewBox>
         <BucketLengthWrapper>
@@ -237,6 +274,9 @@ export default function MyProfile() {
                   handleBucketComplete={
                     activeNumber === 0 && handleBucketComplete(data.boardId)
                   }
+                  handleBucketChangeModalAndSetBoardId={handleBucketChangeModalAndSetBoardId(
+                    data.boardId
+                  )}
                 />
               );
             })}

@@ -1,6 +1,7 @@
 import useMypage from "@/hooks/useMypage";
 import HomeThumnailCard from "@/components/HomeThumnailCard";
 import BucketCard from "@/components/BucketCard";
+import BucketChangeModal from "@/components/BucketChangeModal";
 
 import {
   DefaultContainer,
@@ -15,24 +16,50 @@ import {
 export default function Main() {
   const {
     detailModal,
+    bucketChangeModal,
     homeCardData,
     homeCardDetailData,
     isLoading,
+    date,
+    imgData,
+    valueData,
+    calanderModalState,
     homeObserver,
     handleHomeDetailView,
     handleHomeDetailModalClose,
     handleAddBucket,
+    handleHomeDetailBucketDelete,
     handleDetailHeartAndScrapClick,
     handleBucketDelete,
     handleBucketComplete,
-    handleHomeDetailBucketDelete,
     handleHomeDetailBucketComplete,
+    handleBucketChangeModalState,
+    handleBucketChangeModalAndSetBoardId,
+    handleValueChange,
+    handleImageUpload,
+    handleBucketChangeSubmit,
+    setDate,
+    setCalanderModalState,
   } = useMypage();
   const contentMaxViewLength = 18;
   const titleMaxViewLength = 15;
 
   return (
     <>
+      {bucketChangeModal && (
+        <BucketChangeModal
+          date={date}
+          setDate={setDate}
+          valueData={valueData}
+          imgData={imgData}
+          calanderModalState={calanderModalState}
+          setCalanderModalState={setCalanderModalState}
+          handleValueChange={handleValueChange}
+          handleImageUpload={handleImageUpload}
+          handleBucketChangeModalState={handleBucketChangeModalState}
+          handleBucketChangeSubmit={handleBucketChangeSubmit}
+        />
+      )}
       {detailModal && (
         <BucketCard
           boardId={homeCardDetailData.boardId}
@@ -51,6 +78,17 @@ export default function Main() {
           scrapCount={homeCardDetailData.scrapCount}
           isCompleted={homeCardDetailData.isCompleted}
           putModalOptions={true}
+          bucketChangeModalState={bucketChangeModal}
+          date={date}
+          setDate={setDate}
+          valueData={valueData}
+          imgData={imgData}
+          calanderModalState={calanderModalState}
+          setCalanderModalState={setCalanderModalState}
+          handleValueChange={handleValueChange}
+          handleImageUpload={handleImageUpload}
+          handleBucketChangeModalState={handleBucketChangeModalState}
+          handleBucketChangeSubmit={handleBucketChangeSubmit}
           handleHeartClick={handleDetailHeartAndScrapClick(
             "heart",
             homeCardDetailData.boardId
@@ -118,6 +156,9 @@ export default function Main() {
                     handleHomeDetailModal={handleHomeDetailView(data.boardId)}
                     handleBucketDelete={handleBucketDelete(data.boardId)}
                     handleBucketComplete={handleBucketComplete(data.boardId)}
+                    handleBucketChangeModalAndSetBoardId={handleBucketChangeModalAndSetBoardId(
+                      data.boardId
+                    )}
                   />
                 );
               })}

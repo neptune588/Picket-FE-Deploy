@@ -11,6 +11,7 @@ import Main from "@/pages/Main";
 import MyProfile from "@/pages/MyProfile";
 import Browse from "@/pages/Browse";
 import AddBucketPage from "@/pages/AddBucketPage";
+import BucketChangeModal from "@/components/BucketChangeModal";
 
 const router = createBrowserRouter([
   {
@@ -35,6 +36,10 @@ const router = createBrowserRouter([
   {
     path: "/add",
     element: <AddBucketPage />,
+  },
+  {
+    path: "/testChange",
+    element: <BucketChangeModal />,
   },
   {
     path: "/auth",

@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 
-import { setSearchModal, setDetailBucketModal } from "@/store/modalsSlice";
 import { setKeywordParams } from "@/store/parameterSlice";
 import { setDetailButcket } from "@/store/bucketDetailSlice";
 import {
@@ -17,6 +16,7 @@ import {
 import { getData } from "@/services/api";
 import { postData } from "@/services/api";
 
+import useModalControl from "@/hooks/useModalControl";
 import useSelectorList from "@/hooks/useSelectorList";
 
 export default function useNavBarOptions() {
@@ -35,6 +35,12 @@ export default function useNavBarOptions() {
     bucketDetailData,
   } = useSelectorList();
 
+  const {
+    handleDetailModalState,
+    handleSearchModalState,
+    handleBucketChangeModalState,
+  } = useModalControl();
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userNickName, setUserNickName] = useState(null);
   const [searchValue, setSearchValue] = useState("");
@@ -49,14 +55,6 @@ export default function useNavBarOptions() {
     setDropdownOpen(!dropdownOpen);
   };
 
-  const handleSearchModalControl = () => {
-    dispatch(setSearchModal());
-  };
-
-  const handleDetailModalState = () => {
-    detailModal && dispatch(setDetailBucketModal());
-  };
-
   const loginCheck = () => {
     const condition = localStorage.getItem("userNickname");
     if (condition) {
@@ -69,6 +67,7 @@ export default function useNavBarOptions() {
     localStorage.removeItem("userAccessToken");
     localStorage.removeItem("userId");
     localStorage.removeItem("userNickname");
+    localStorage.removeItem("userAvatar");
 
     setUserNickName("");
   };
@@ -166,8 +165,7 @@ export default function useNavBarOptions() {
         );
         setLatestDetailCard(bucketDetailData);
 
-        !detailModal && dispatch(setDetailBucketModal());
-
+        handleDetailModalState();
         //console.log(data);
       } catch (error) {
         console.error("Oh~", error);
@@ -271,7 +269,6 @@ export default function useNavBarOptions() {
     latestDetailCard,
     activeNum,
     setSearchValue,
-    handleSearchModalControl,
     handleChange,
     handleSearch,
     handleSignOut,
@@ -280,6 +277,7 @@ export default function useNavBarOptions() {
     handleLatestKeywordDelete,
     handleDetailCardReq,
     handleDetailModalState,
+    handleSearchModalState,
     handleHeartAndScrapClick,
     handleDetailHeartAndScrapClick,
     handleMenuActive,

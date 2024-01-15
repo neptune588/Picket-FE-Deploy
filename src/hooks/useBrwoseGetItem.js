@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useInView } from "react-intersection-observer";
+
 import {
   setTotalParams,
   setPrevParams,
@@ -14,15 +15,16 @@ import {
   setThumnailCard,
   deleteThumnailCard,
 } from "@/store/bucketThumnailSlice";
-import { setDetailBucketModal } from "@/store/modalsSlice";
 import { setDetailButcket, setScrollLocation } from "@/store/bucketDetailSlice";
+
+import useModalControl from "@/hooks/useModalControl";
+import useSelectorList from "@/hooks/useSelectorList";
 
 import { getData } from "@/services/api";
 import { postData } from "@/services/api";
 import { delData } from "@/services/api";
 import { patchData } from "@/services/api";
 
-import useSelectorList from "@/hooks/useSelectorList";
 import { categoriesData } from "@/utils/categoryData";
 
 export default function useBrwoseGetItem() {
@@ -31,6 +33,7 @@ export default function useBrwoseGetItem() {
   const navigate = useNavigate();
   const { keyword: curKeyword } = useParams();
 
+  const { handleDetailModalState } = useModalControl();
   const {
     page,
     keyword,
@@ -187,21 +190,14 @@ export default function useBrwoseGetItem() {
           //마지막페이지 검증로직
           //라스트페이지면 스켈레톤x axios호출x
           setLastPage(true);
-          dispatch(setThumnailCard(data.content));
-
-          setIsLoading(false);
-
-          return;
         } else {
           setLastPage(false);
-          dispatch(setThumnailCard(data.content));
-
-          setIsLoading(false);
         }
+        dispatch(setThumnailCard(data.content));
       } else {
         setLastPage(true);
-        setIsLoading(false);
       }
+      setIsLoading(false);
     } catch (error) {
       console.error("Oh~ :", error);
     }
@@ -243,7 +239,7 @@ export default function useBrwoseGetItem() {
       } else {
         localStorage.setItem("latestBucket", JSON.stringify([latestCard]));
       }
-      !detailModal && dispatch(setDetailBucketModal());
+      handleDetailModalState();
 
       //console.log(data);
     } catch (error) {
@@ -261,8 +257,8 @@ export default function useBrwoseGetItem() {
     };
   };
 
-  const handleDetailModalState = () => {
-    detailModal && dispatch(setDetailBucketModal());
+  const handleDetailModalClose = () => {
+    handleDetailModalState();
     setTimeout(() => {
       window.scroll({ top: curScrollLocation, left: 0 });
     }, 50);
@@ -279,8 +275,10 @@ export default function useBrwoseGetItem() {
         },
       });
     },
-    onSuccess: async (res) => {
-      //페이지로 산정되지 않는 짜투리 갯수를 위해 + 8 한번더
+    onSuccess: async () => {
+      //페이지는 0부터 8개이기때문에 8을 더해줘야 내가 내린만큼 나옴.
+      //ex 0 1 2 3 총 스크롤 4번내려서 32개의 아이템이 받아지지만
+      //page * 3을하면 24개가됨 따라서 8을 더해줘야 하는것
       const { data } = await getData(
         `board/list/search?size=${page.value * 8 + 8}${
           keyword.key + keyword.value
@@ -378,100 +376,6 @@ export default function useBrwoseGetItem() {
     };
   };
 
-  const detailBucketDelete = useMutation({
-    mutationFn: async (curBoardId) => {
-      const token = `Bearer ${JSON.parse(
-        localStorage.getItem("userAccessToken")
-      )}`;
-      return await delData(`board/${curBoardId}`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-    },
-    onSuccess: async () => {
-      try {
-        const { data } = await getData(
-          `board/list/search?size=${page.value * 8 + 8}${
-            keyword.key + keyword.value
-          }${categoryList.key + categoryList.value}`
-        );
-
-        dispatch(deleteThumnailCard());
-        dispatch(setThumnailCard(data.content));
-
-        alert("버킷이 삭제 되었습니다!");
-        dispatch(setDetailBucketModal());
-      } catch (error) {
-        console.error("Oh~ :", error);
-      }
-    },
-    onError: (error) => {
-      if (error.response.status === 401) {
-        alert("권한이 없습니다!");
-      }
-    },
-  });
-
-  const handleDetailBucketDelete = (curBoardId) => {
-    return () => {
-      confirm("버킷을 삭제하시겠습니까?") &&
-        detailBucketDelete.mutate(curBoardId);
-    };
-  };
-
-  const detailBucketComplete = useMutation({
-    mutationFn: async (curData) => {
-      const token = `Bearer ${JSON.parse(
-        localStorage.getItem("userAccessToken")
-      )}`;
-      return await patchData(`board/${curData}/complete`, null, {
-        headers: {
-          Authorization: token,
-        },
-      });
-    },
-    onSuccess: async () => {
-      try {
-        cardDetailReq(bucketDetailData.boardId);
-
-        const token = `Bearer ${JSON.parse(
-          localStorage.getItem("userAccessToken")
-        )}`;
-        const { data } = await getData(
-          `board/list/search?size=${page.value * 8 + 8}${
-            keyword.key + keyword.value
-          }${categoryList.key + categoryList.value}`,
-          {
-            headers: {
-              Authorization: token,
-            },
-          }
-        );
-        dispatch(deleteThumnailCard());
-        dispatch(setCardData(data.content));
-
-        alert("버킷을 달성하셨습니다!");
-      } catch (error) {
-        console.error("Oh~ :", error);
-      }
-    },
-    onError: (error) => {
-      if (error.response.status === 409) {
-        alert("이미 달성한 버킷입니다!");
-      } else {
-        console.error("에러러");
-      }
-    },
-  });
-
-  const handleDetailBucketComplete = (curBoardId) => {
-    return () => {
-      confirm("버킷을 달성하시겠습니까?") &&
-        detailBucketComplete.mutate(curBoardId);
-    };
-  };
-
   //시작시 리스트 불러옴
   useEffect(() => {
     //비워줘야지 다른 페이지갔다 다시 와서 카테구리 누를때 []이 디폴트인상태에서 됨. 즉 처음페이지에 온것처럼 됨.
@@ -516,6 +420,7 @@ export default function useBrwoseGetItem() {
       mounted04.current = true;
     } else {
       setCardData(thumnailCards.data);
+      //console.log(thumnailCards.data);
     }
   }, [thumnailCards.data]);
 
@@ -558,11 +463,9 @@ export default function useBrwoseGetItem() {
     observerRef,
     handleCategoryClick,
     handleDetailView,
-    handleDetailModalState,
+    handleDetailModalClose,
     handleHeartAndScrapClick,
     handleDetailHeartAndScrapClick,
-    handleDetailBucketDelete,
-    handleDetailBucketComplete,
   };
 }
 

@@ -4,8 +4,6 @@ import { useMutation } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 import { useInView } from "react-intersection-observer";
 
-import { setProfileEditModal } from "@/store/modalsSlice";
-
 import {
   setTotalHomeParams,
   setLastBoardHomeParams,
@@ -15,17 +13,20 @@ import {
 import {
   setHomeTumnailCards,
   deleteHomeThumnailCard,
+  setHomeThumnailCurBoardId,
 } from "@/store/bucketThumnailSlice";
 
-import { setDetailBucketModal } from "@/store/modalsSlice";
 import { setDetailButcket, setScrollLocation } from "@/store/bucketDetailSlice";
+
+import useModalControl from "@/hooks/useModalControl";
+import useSelectorList from "@/hooks/useSelectorList";
+import useBucketCreateCommon from "@/hooks/useBucketCreateCommon";
 
 import { getData } from "@/services/api";
 import { postData } from "@/services/api";
 import { delData } from "@/services/api";
 import { patchData } from "@/services/api";
 
-import useSelectorList from "@/hooks/useSelectorList";
 import { nickNameReg } from "@/utils/userAuthRegex";
 
 export default function useMyProfile() {
@@ -33,19 +34,37 @@ export default function useMyProfile() {
   const dispatch = useDispatch();
 
   const {
+    handleDetailModalState,
+    handleProfileModalState,
+    handleBucketChangeModalState,
+  } = useModalControl();
+  const {
     detailModal,
     profileEditModal,
+    bucketChangeModal,
     homePage,
     totalHomeParams,
     homeThumnailCards,
     bucketDetailData,
     curScrollLocation,
+    curHomeThumnailBoardId,
   } = useSelectorList();
+  const {
+    date,
+    imgData,
+    valueData,
+    submitLoading,
+    calanderModalState,
+    setDate,
+    setSubmitLoading,
+    setCalanderModalState,
+    handleValueChange,
+    handleImageUpload,
+  } = useBucketCreateCommon();
 
   const [lastPage, setLastPage] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [submitLoading, setSubmitLoading] = useState(false);
 
   const [completeCount, setCompleteCount] = useState(0);
   const [pregressCount, setPregressCount] = useState(0);
@@ -150,19 +169,40 @@ export default function useMyProfile() {
           },
         }
       );
-      console.log(data);
+      //console.log(data);
       if (Array.isArray(data.content) && data.content.length > 0) {
         data.last && setLastPage(true);
 
         setLastPage(false);
         dispatch(setHomeTumnailCards(data.content));
-        setIsLoading(false);
       } else {
         setLastPage(true);
-        setIsLoading(false);
       }
+      setIsLoading(false);
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const cardDataRenewal = async () => {
+    try {
+      const token = `Bearer ${JSON.parse(
+        localStorage.getItem("userAccessToken")
+      )}`;
+      const { data } = await getData(
+        `board/myposts?size=${homePage.value * 8 + 8}`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      profileCompleteCountReq();
+
+      dispatch(deleteHomeThumnailCard());
+      dispatch(setHomeTumnailCards(data.content));
+    } catch (error) {
+      console.error("Oh~ :", error);
     }
   };
 
@@ -206,7 +246,8 @@ export default function useMyProfile() {
       } else {
         localStorage.setItem("latestBucket", JSON.stringify([latestCard]));
       }
-      !detailModal && dispatch(setDetailBucketModal());
+
+      handleDetailModalState();
 
       //console.log(data);
     } catch (error) {
@@ -214,8 +255,11 @@ export default function useMyProfile() {
     }
   };
 
-  const handleProfileEditModalState = () => {
-    dispatch(setProfileEditModal());
+  const handleBucketChangeModalAndSetBoardId = (curBoardId) => {
+    return () => {
+      dispatch(setHomeThumnailCurBoardId(curBoardId));
+      handleBucketChangeModalState();
+    };
   };
 
   const handleProfileImgChange = (e) => {
@@ -277,7 +321,7 @@ export default function useMyProfile() {
     }
   };
 
-  const handleEditModalClose = () => {
+  const handleProfileModalClose = () => {
     setNicknameValue("");
     setErrors({
       ...errors,
@@ -287,7 +331,7 @@ export default function useMyProfile() {
       totalErrorMsg: "",
     });
     setPreviewImg(null);
-    handleProfileEditModalState();
+    handleProfileModalState();
   };
 
   const profileEditReq = async (e) => {
@@ -322,22 +366,20 @@ export default function useMyProfile() {
           },
         });
 
-        console.log(res);
         localStorage.setItem("userNickname", JSON.stringify(res.data.nickname));
         localStorage.setItem("userAvatar", res.data.imageUrl);
 
-        handleEditModalClose();
+        handleProfileModalClose();
       } catch (error) {
         console.error(error.status);
       }
-      setSubmitLoading(false);
     } else {
       setErrors({
         ...errors,
         nicknameErrorMsg: "닉네임이 유효한지 다시 한번 확인 해주세요!",
       });
-      setSubmitLoading(false);
     }
+    setSubmitLoading(false);
   };
 
   const handleMenuClick = (curMenuNum) => {
@@ -358,7 +400,7 @@ export default function useMyProfile() {
   };
 
   const handleCardDetailModalClose = () => {
-    detailModal && dispatch(setDetailBucketModal());
+    handleDetailModalState();
     setTimeout(() => {
       window.scroll({ top: curScrollLocation, left: 0 });
     }, 50);
@@ -377,25 +419,7 @@ export default function useMyProfile() {
     },
     onSuccess: async () => {
       alert("버킷이 삭제 되었습니다!");
-      try {
-        const token = `Bearer ${JSON.parse(
-          localStorage.getItem("userAccessToken")
-        )}`;
-        const { data } = await getData(
-          `board/myposts?size=${homePage.value * 8 + 8}`,
-          {
-            headers: {
-              Authorization: token,
-            },
-          }
-        );
-        profileCompleteCountReq();
-
-        dispatch(deleteHomeThumnailCard());
-        dispatch(setHomeTumnailCards(data.content));
-      } catch (error) {
-        console.error("Oh~ :", error);
-      }
+      cardDataRenewal();
     },
     onError: (error) => {
       console.error(error);
@@ -421,26 +445,8 @@ export default function useMyProfile() {
     },
     onSuccess: async () => {
       alert("버킷이 삭제 되었습니다!");
-      dispatch(setDetailBucketModal());
-      try {
-        const token = `Bearer ${JSON.parse(
-          localStorage.getItem("userAccessToken")
-        )}`;
-        const { data } = await getData(
-          `board/myposts?size=${homePage.value * 8 + 8}`,
-          {
-            headers: {
-              Authorization: token,
-            },
-          }
-        );
-
-        profileCompleteCountReq();
-        dispatch(deleteHomeThumnailCard());
-        dispatch(setHomeTumnailCards(data.content));
-      } catch (error) {
-        console.error("Oh~ :", error);
-      }
+      handleDetailModalState();
+      cardDataRenewal();
     },
     onError: (error) => {
       if (error.response.status === 401) {
@@ -468,26 +474,8 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async () => {
-      try {
-        const token = `Bearer ${JSON.parse(
-          localStorage.getItem("userAccessToken")
-        )}`;
-        const { data } = await getData(
-          `board/myposts?size=${homePage.value * 8 + 8}`,
-          {
-            headers: {
-              Authorization: token,
-            },
-          }
-        );
-        profileCompleteCountReq();
-        dispatch(deleteHomeThumnailCard());
-        dispatch(setHomeTumnailCards(data.content));
-
-        alert("버킷을 달성하셨습니다!");
-      } catch (error) {
-        console.error("Oh~ :", error);
-      }
+      alert("버킷을 달성하셨습니다!");
+      cardDataRenewal();
     },
     onError: (error) => {
       if (error.response.status === 409) {
@@ -517,26 +505,8 @@ export default function useMyProfile() {
     },
     onSuccess: async () => {
       cardDetailReq(bucketDetailData.boardId);
-      try {
-        const token = `Bearer ${JSON.parse(
-          localStorage.getItem("userAccessToken")
-        )}`;
-        const { data } = await getData(
-          `board/myposts?size=${homePage.value * 8 + 8}`,
-          {
-            headers: {
-              Authorization: token,
-            },
-          }
-        );
-        profileCompleteCountReq();
-        dispatch(deleteHomeThumnailCard());
-        dispatch(setHomeTumnailCards(data.content));
-
-        alert("버킷을 달성하셨습니다!");
-      } catch (error) {
-        console.error("Oh~ :", error);
-      }
+      alert("버킷을 달성하셨습니다!");
+      cardDataRenewal();
     },
     onError: (error) => {
       if (error.response.status === 409) {
@@ -567,23 +537,7 @@ export default function useMyProfile() {
     },
     onSuccess: async () => {
       cardDetailReq(bucketDetailData.boardId);
-      try {
-        const token = `Bearer ${JSON.parse(
-          localStorage.getItem("userAccessToken")
-        )}`;
-        const { data } = await getData(
-          `board/myposts?size=${homePage.value * 8 + 8}`,
-          {
-            headers: {
-              Authorization: token,
-            },
-          }
-        );
-        dispatch(deleteHomeThumnailCard());
-        dispatch(setHomeTumnailCards(data.content));
-      } catch (error) {
-        console.error("Oh~ :", error);
-      }
+      cardDataRenewal();
     },
     onError: (error) => {
       console.error(error);
@@ -643,6 +597,99 @@ export default function useMyProfile() {
     };
   };
 
+  const bucketChange = useMutation({
+    mutationFn: async ({ formData, boardId }) => {
+      const token = `Bearer ${JSON.parse(
+        localStorage.getItem("userAccessToken")
+      )}`;
+      return await postData(`board/${boardId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: token,
+        },
+      });
+    },
+    onSuccess: async () => {
+      alert("버킷을 수정 했습니다!");
+
+      cardDataRenewal();
+      handleBucketChangeModalState();
+    },
+    onError: (error) => {
+      console.error(error);
+    },
+  });
+
+  const detailBucketChange = useMutation({
+    mutationFn: async ({ formData, boardId }) => {
+      const token = `Bearer ${JSON.parse(
+        localStorage.getItem("userAccessToken")
+      )}`;
+      return await postData(`board/${boardId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: token,
+        },
+      });
+    },
+    onSuccess: async () => {
+      alert("버킷을 수정 했습니다!");
+
+      cardDetailReq(bucketDetailData.boardId);
+      cardDataRenewal();
+      handleBucketChangeModalState();
+    },
+    onError: (error) => {
+      console.error(error);
+    },
+  });
+
+  const handleBucketChangeSubmit = (e) => {
+    e.preventDefault();
+
+    if (submitLoading) {
+      return;
+    }
+    setSubmitLoading(true);
+
+    //안해도되긴하지만 중복검증
+    const { bucketTitle, bucketContent } = valueData;
+    const { postImg } = imgData;
+
+    if (bucketTitle && bucketContent && postImg) {
+      const formData = new FormData();
+
+      const contents = {
+        title: bucketTitle,
+        content: bucketContent,
+        deadline:
+          date.getFullYear() +
+          "-" +
+          String(date.getMonth() + 1).padStart(2, 0) +
+          "-" +
+          String(date.getDate()).padStart(2, 0),
+      };
+      formData.append(
+        "patchBoardRequestDTO",
+        new Blob([JSON.stringify(contents)], {
+          type: "application/json",
+        })
+      );
+      formData.append("file", postImg);
+
+      detailModal
+        ? detailBucketChange.mutate({
+            formData,
+            boardId: bucketDetailData.boardId,
+          })
+        : bucketChange.mutate({ formData, boardId: curHomeThumnailBoardId });
+    } else {
+      alert("내용 작성 밑 이미지를 업로드 해주세요!");
+    }
+
+    setSubmitLoading(false);
+  };
+
   useEffect(() => {
     if (!localStorage.getItem("userAccessToken")) {
       navigate("/");
@@ -684,6 +731,9 @@ export default function useMyProfile() {
   }, [profileEditModal]);
 
   return {
+    date,
+    valueData,
+    imgData,
     completeCount,
     pregressCount,
     activeNumber,
@@ -697,10 +747,14 @@ export default function useMyProfile() {
     errors,
     isLoading,
     dummyObserver,
+    bucketChangeModal,
+    calanderModalState,
+    setCalanderModalState,
+    setDate,
     profileCardObserver,
     handleChange,
-    handleEditModalClose,
-    handleProfileEditModalState,
+    handleProfileModalClose,
+    handleProfileModalState,
     handleMenuClick,
     handleCardDetailView,
     handleCardDetailModalClose,
@@ -711,6 +765,11 @@ export default function useMyProfile() {
     handleDetailHeartClick,
     handleProfileImgChange,
     handleNicknameRepeatCheck,
+    handleBucketChangeSubmit,
+    handleValueChange,
+    handleImageUpload,
+    handleBucketChangeModalState,
+    handleBucketChangeModalAndSetBoardId,
     profileEditReq,
   };
 }

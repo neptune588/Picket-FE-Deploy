@@ -2,8 +2,6 @@ import BucketCalander from "@/components/BucketCalander";
 import Input from "@/components/Input/Input";
 import SubmitButton from "@/components/SubmitButton/SubmitButton";
 
-import useBucketChange from "@/hooks/useBucketChange";
-
 import {
   ModalOuter,
   Container,
@@ -23,19 +21,18 @@ import {
   PrevButton,
 } from "@/pages/AddBucketPage/style";
 
-export default function BucketChangeModal({ type, boardId = null }) {
-  const {
-    date,
-    imgData,
-    valueData,
-    calanderModalState,
-    handleImageUpload,
-    handleChange,
-    handleSubmit,
-    setDate,
-    setCalanderModalState,
-    bucketChangeModalClose,
-  } = useBucketChange(type, boardId);
+export default function BucketChangeModal({
+  date,
+  setDate,
+  valueData,
+  imgData,
+  calanderModalState,
+  setCalanderModalState,
+  handleValueChange,
+  handleImageUpload,
+  handleBucketChangeModalState,
+  handleBucketChangeSubmit,
+}) {
   return (
     <>
       {calanderModalState && (
@@ -49,7 +46,7 @@ export default function BucketChangeModal({ type, boardId = null }) {
       )}
       <ModalOuter>
         <Container>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleBucketChangeSubmit}>
             <ImageUploadWrapper>
               <input
                 type="file"
@@ -96,7 +93,7 @@ export default function BucketChangeModal({ type, boardId = null }) {
                   name={"bucketTitle"}
                   placeholder={"제목을 입력하세요."}
                   value={valueData.bucketTitle}
-                  onChange={handleChange}
+                  onChange={handleValueChange}
                 />
               </InputBox>
               <InputBox>
@@ -106,11 +103,13 @@ export default function BucketChangeModal({ type, boardId = null }) {
                   value={valueData.bucketContent}
                   name={"bucketContent"}
                   placeholder={"내용을 입력하세요."}
-                  onChange={handleChange}
+                  onChange={handleValueChange}
                 />
               </InputBox>
               <ButtonBox>
-                <PrevButton onClick={bucketChangeModalClose}>취소</PrevButton>
+                <PrevButton onClick={handleBucketChangeModalState}>
+                  취소
+                </PrevButton>
                 <SubmitButton width={"195px"} value={"완료"} />
               </ButtonBox>
             </ContentsWrapper>

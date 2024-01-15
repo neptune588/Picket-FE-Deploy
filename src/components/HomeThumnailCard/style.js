@@ -119,7 +119,7 @@ const ThumnailPutModal = styled.ul`
   align-items: center;
   justify-content: center;
   width: 200px;
-  height: 140px;
+  height: 180px;
   background-color: ${({ theme: { colors } }) => {
     return colors.white;
   }};
@@ -134,7 +134,7 @@ const PutOptionList = styled.li`
   font-weight: ${({ theme: { typo } }) => {
     return typo.weight.medium;
   }};
-  transition: all 0.2s;
+  transition: all 0.1s;
   border-radius: 15px;
   margin-bottom: 5px;
   &:hover {

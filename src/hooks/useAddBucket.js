@@ -3,51 +3,33 @@ import { useNavigate } from "react-router-dom";
 import { categoriesData } from "@/utils/categoryData";
 import { useMutation } from "@tanstack/react-query";
 
+import useBucketCreateCommon from "@/hooks/useBucketCreateCommon";
+
 import { postData } from "@/services/api";
 
 export default function useAddBucket() {
   const navigate = useNavigate();
 
+  const {
+    date,
+    imgData,
+    valueData,
+    submitLoading,
+    calanderModalState,
+    setDate,
+    setValueData,
+    setSubmitLoading,
+    setCalanderModalState,
+    handleChange,
+    handleImageUpload,
+  } = useBucketCreateCommon();
+
   const [step, setStep] = useState(0);
-  const [date, setDate] = useState(new Date());
-  const [calanderModalState, setCalanderModalState] = useState(false);
-  //multipart
-  const [imgData, setImgData] = useState({
-    previewImg: null,
-    postImg: null,
-  });
   const [categoryData, setCategoryData] = useState(() => {
     const data = [...categoriesData];
     data.splice(0, 1);
     return data;
   });
-  const [valueData, setValueData] = useState({
-    bucketTitle: "", //condition ->  value === "",null,undifined x
-    bucketContent: "", //condition ->  value === "",null,undifined x
-    categoryList: [], //condition -> length === 0 x
-  });
-  const [submitLoading, setSubmitLoading] = useState(false);
-  const handleImageUpload = (e) => {
-    const { files } = e.target;
-
-    const fileRead = new FileReader();
-
-    //다 읽고나면 실행되는 콜백
-    fileRead.onload = ({ target }) => {
-      setImgData((prev) => {
-        return { ...prev, previewImg: target.result };
-      });
-    };
-    fileRead.readAsDataURL(files[0]);
-    setImgData((prev) => {
-      return { ...prev, postImg: files[0] };
-    });
-  };
-
-  const handleChange = (e) => {
-    console.log(valueData);
-    setValueData({ ...valueData, [e.target.name]: e.target.value });
-  };
 
   const handleCategoryClick = (activeNumber, queryNumber) => {
     return () => {
@@ -158,15 +140,14 @@ export default function useAddBucket() {
     categoryData,
     step,
     calanderModalState,
-    submitLoading,
+    setDate,
+    setStep,
+    setSubmitLoading,
+    setCalanderModalState,
     handleImageUpload,
     handleChange,
     handleCategoryClick,
     handleNextStepCheck,
     handleSubmit,
-    setDate,
-    setStep,
-    setCalanderModalState,
-    setSubmitLoading,
   };
 }

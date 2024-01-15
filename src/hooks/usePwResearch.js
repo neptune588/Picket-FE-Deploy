@@ -61,7 +61,6 @@ export default function usePwResearch() {
     },
   });
 
-  console.log(isPending);
   const handleChange = (e) => {
     setValue({ ...value, [e.target.name]: e.target.value });
 
@@ -86,18 +85,14 @@ export default function usePwResearch() {
         pwResearchInvaildNotice: "inVaild",
         userPwResearchMsg: "이메일 형식이 올바르지 않습니다.",
       });
-
-      setSubmitLoading(false);
-      return;
     } else {
       const refine = {
         email: value.userPwResearch,
       };
 
       mutate(JSON.stringify(refine));
-
-      setSubmitLoading(false);
     }
+    setSubmitLoading(false);
   };
 
   return {

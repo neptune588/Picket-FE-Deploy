@@ -8,6 +8,7 @@ const initialState = {
   homeThumnailCards: {
     data: [],
   },
+  curBoardId: null,
 };
 
 const bucketThumnailSlice = createSlice({
@@ -72,6 +73,10 @@ const bucketThumnailSlice = createSlice({
       });
       homeThumnailCards.data[curThumnailNumber].putOptions = curPutOptionsState;
     },
+    setHomeThumnailCurBoardId(state, action) {
+      const { payload: boardId } = action;
+      state.curBoardId = boardId;
+    },
   },
 });
 
@@ -81,5 +86,6 @@ export const {
   setHomeTumnailCards,
   deleteHomeThumnailCard,
   setHomeThumnailPutModalState,
+  setHomeThumnailCurBoardId,
 } = bucketThumnailSlice.actions;
 export default bucketThumnailSlice.reducer;

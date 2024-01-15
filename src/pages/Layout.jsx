@@ -19,14 +19,30 @@ import NavBar from "@/components/NavBar";
 const CenterdContainer = styled.div`
   position: relative;
   width: 1440px;
-  height: ${({ $isSearchModal, $isDetailModal, $isProfileEditModal }) => {
+  height: ${({
+    $isSearchModal,
+    $isDetailModal,
+    $isProfileEditModal,
+    $isBucketChangeModal,
+  }) => {
     return (
-      ($isSearchModal || $isDetailModal || $isProfileEditModal) &&
+      ($isSearchModal ||
+        $isDetailModal ||
+        $isProfileEditModal ||
+        $isBucketChangeModal) &&
       "calc(100vh - 70px)"
     );
   }};
-  overflow: ${({ $isSearchModal, $isDetailModal, $isProfileEditModal }) => {
-    return $isSearchModal || $isDetailModal || $isProfileEditModal
+  overflow: ${({
+    $isSearchModal,
+    $isDetailModal,
+    $isProfileEditModal,
+    $isBucketChangeModal,
+  }) => {
+    return $isSearchModal ||
+      $isDetailModal ||
+      $isProfileEditModal ||
+      $isBucketChangeModal
       ? "hidden"
       : "visible";
   }};
@@ -35,7 +51,8 @@ const CenterdContainer = styled.div`
 `;
 
 export default function Layout() {
-  const { detailModal, profileEditModal, searchModal } = useSelectorList();
+  const { detailModal, profileEditModal, searchModal, bucketChangeModal } =
+    useSelectorList();
 
   const dispatch = useDispatch();
 
@@ -59,6 +76,7 @@ export default function Layout() {
         $isProfileEditModal={profileEditModal}
         $isSearchModal={searchModal}
         $isDetailModal={detailModal}
+        $isBucketChangeModal={bucketChangeModal}
       >
         <Outlet />
       </CenterdContainer>

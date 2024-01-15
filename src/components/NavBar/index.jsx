@@ -42,7 +42,6 @@ export default function NavBar() {
     latestDetailCard,
     activeNum,
     setSearchValue,
-    handleSearchModalControl,
     handleChange,
     handleSearch,
     handleSignOut,
@@ -51,6 +50,7 @@ export default function NavBar() {
     handleLatestKeywordDelete,
     handleDetailCardReq,
     handleDetailModalState,
+    handleSearchModalState,
     handleHeartAndScrapClick,
     handleDetailHeartAndScrapClick,
     handleMenuActive,
@@ -115,7 +115,7 @@ export default function NavBar() {
             value={searchValue}
             onChange={handleChange}
             placeholder="검색"
-            onClick={handleSearchModalControl}
+            onClick={handleSearchModalState}
             onKeyUp={handleSearch}
             maxLength={15}
           />
@@ -221,7 +221,7 @@ export default function NavBar() {
                 : "최근 본 버킷리스트가 없습니다."}
             </ThumnailCardBox>
           </SearchModal>
-          <SearchModalCloseArea onClick={handleSearchModalControl} />
+          <SearchModalCloseArea onClick={handleSearchModalState} />
         </SearchModalWrraper>
       )}
     </>

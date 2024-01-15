@@ -17,16 +17,22 @@ export default function useSelectorList() {
     return state.bucketDetail;
   });
 
-  const { detailModal, searchModal, profileEditModal } = moadals;
+  const { detailModal, searchModal, profileEditModal, bucketChangeModal } =
+    moadals;
   const { page: homePage, totalParams: totalHomeParams } = homeParams;
   const { page, keyword, categoryList, prevParams, totalParams } = params;
-  const { homeThumnailCards, thumnailCards } = cards;
+  const {
+    homeThumnailCards,
+    thumnailCards,
+    curBoardId: curHomeThumnailBoardId,
+  } = cards;
   const { bucketDetailData, curScrollLocation } = bucketDetailObj;
 
   return {
     detailModal,
     searchModal,
     profileEditModal,
+    bucketChangeModal,
     bucketDetailData,
     curScrollLocation,
     homePage,
@@ -38,5 +44,6 @@ export default function useSelectorList() {
     totalParams,
     homeThumnailCards,
     thumnailCards,
+    curHomeThumnailBoardId,
   };
 }

@@ -32,14 +32,14 @@ export default function AddBucketPage() {
     categoryData,
     step,
     calanderModalState,
+    setDate,
+    setStep,
+    setCalanderModalState,
     handleImageUpload,
     handleChange,
     handleCategoryClick,
     handleNextStepCheck,
     handleSubmit,
-    setDate,
-    setStep,
-    setCalanderModalState,
   } = useAddBucket();
 
   return (
