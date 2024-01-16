@@ -11,6 +11,7 @@ import {
   setPrevParams,
   setTotalParams,
 } from "@/store/parameterSlice";
+import { setMenuActive } from "@/store/navBarMenuSlice";
 
 export default function AuthLayoutPage() {
   const dispatch = useDispatch();
@@ -25,11 +26,16 @@ export default function AuthLayoutPage() {
     searchModal && dispatch(setSearchModal());
     detailModal && dispatch(setDetailBucketModal());
 
-    if (!location.pathname.split("/").includes("search")) {
+    const browseUrl = location.pathname.split("/").includes("search");
+    if (!browseUrl) {
       dispatch(setKeywordParams(["", ""]));
       dispatch(setTotalParams());
       dispatch(setPrevParams());
       dispatch(deleteThumnailCard());
+    }
+
+    if (!(location.pathname === "/" || browseUrl)) {
+      dispatch(setMenuActive(null));
     }
   }, [location]);
 

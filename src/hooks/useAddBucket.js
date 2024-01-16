@@ -20,7 +20,7 @@ export default function useAddBucket() {
     setValueData,
     setSubmitLoading,
     setCalanderModalState,
-    handleChange,
+    handleValueChange,
     handleImageUpload,
   } = useBucketCreateCommon();
 
@@ -145,7 +145,7 @@ export default function useAddBucket() {
     setSubmitLoading,
     setCalanderModalState,
     handleImageUpload,
-    handleChange,
+    handleValueChange,
     handleCategoryClick,
     handleNextStepCheck,
     handleSubmit,

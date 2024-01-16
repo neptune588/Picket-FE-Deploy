@@ -369,6 +369,7 @@ export default function useMyProfile() {
         localStorage.setItem("userNickname", JSON.stringify(res.data.nickname));
         localStorage.setItem("userAvatar", res.data.imageUrl);
 
+        alert("프로필이 수정 되었습니다!");
         handleProfileModalClose();
       } catch (error) {
         console.error(error.status);

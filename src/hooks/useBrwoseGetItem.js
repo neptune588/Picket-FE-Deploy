@@ -239,7 +239,7 @@ export default function useBrwoseGetItem() {
       } else {
         localStorage.setItem("latestBucket", JSON.stringify([latestCard]));
       }
-      handleDetailModalState();
+      !detailModal && handleDetailModalState();
 
       //console.log(data);
     } catch (error) {
@@ -286,6 +286,7 @@ export default function useBrwoseGetItem() {
       );
       dispatch(deleteThumnailCard());
       dispatch(setThumnailCard(data.content));
+
       //console.log(res);
     },
 
@@ -297,11 +298,11 @@ export default function useBrwoseGetItem() {
   });
 
   const detailLikeAndScrapReq = useMutation({
-    mutationFn: async (curData) => {
+    mutationFn: async (curQuery) => {
       const token = `Bearer ${JSON.parse(
         localStorage.getItem("userAccessToken")
       )}`;
-      return await postData(`board/${curData}`, null, {
+      return await postData(`board/${curQuery}`, null, {
         headers: {
           Authorization: token,
         },
@@ -420,7 +421,18 @@ export default function useBrwoseGetItem() {
       mounted04.current = true;
     } else {
       setCardData(thumnailCards.data);
-      //console.log(thumnailCards.data);
+
+      //최근검색어데이터 4개 갱신
+      const latestCard = JSON.parse(localStorage.getItem("latestBucket"));
+      if (latestCard && latestCard.length > 0) {
+        const refine = latestCard.map((latestCard) => {
+          const compare = thumnailCards.data.find((card) => {
+            return latestCard.boardId === card.boardId;
+          });
+          return compare ? compare : latestCard;
+        });
+        localStorage.setItem("latestBucket", JSON.stringify(refine));
+      }
     }
   }, [thumnailCards.data]);
 

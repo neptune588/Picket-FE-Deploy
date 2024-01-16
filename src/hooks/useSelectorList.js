@@ -16,6 +16,9 @@ export default function useSelectorList() {
   const bucketDetailObj = useSelector((state) => {
     return state.bucketDetail;
   });
+  const navBarMenuNumber = useSelector((state) => {
+    return state.navBarMenu;
+  });
 
   const { detailModal, searchModal, profileEditModal, bucketChangeModal } =
     moadals;
@@ -27,6 +30,7 @@ export default function useSelectorList() {
     curBoardId: curHomeThumnailBoardId,
   } = cards;
   const { bucketDetailData, curScrollLocation } = bucketDetailObj;
+  const { activeNumber: navActiveNumber } = navBarMenuNumber;
 
   return {
     detailModal,
@@ -45,5 +49,6 @@ export default function useSelectorList() {
     homeThumnailCards,
     thumnailCards,
     curHomeThumnailBoardId,
+    navActiveNumber,
   };
 }

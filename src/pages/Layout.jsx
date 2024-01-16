@@ -10,6 +10,7 @@ import {
   setPrevParams,
   setTotalParams,
 } from "@/store/parameterSlice";
+import { setMenuActive } from "@/store/navBarMenuSlice";
 
 import useSelectorList from "@/hooks/useSelectorList";
 
@@ -61,11 +62,17 @@ export default function Layout() {
   useEffect(() => {
     searchModal && dispatch(setSearchModal());
     detailModal && dispatch(setDetailBucketModal());
-    if (!location.pathname.split("/").includes("search")) {
+
+    const browseUrl = location.pathname.split("/").includes("search");
+    if (!browseUrl) {
       dispatch(setKeywordParams(["", ""]));
       dispatch(setTotalParams());
       dispatch(setPrevParams());
       dispatch(deleteThumnailCard());
+    }
+
+    if (!(location.pathname === "/" || browseUrl)) {
+      dispatch(setMenuActive(null));
     }
   }, [location]);
 

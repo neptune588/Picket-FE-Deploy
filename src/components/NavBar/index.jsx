@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+
 import useNavBarOptions from "@/hooks/useNavBarOptions";
 
 import ThumnailCard from "@/components/ThumnailCard";
@@ -40,7 +42,7 @@ export default function NavBar() {
     searchModal,
     detailModal,
     latestDetailCard,
-    activeNum,
+    navActiveNumber,
     setSearchValue,
     handleChange,
     handleSearch,
@@ -60,7 +62,7 @@ export default function NavBar() {
   const titleViewLength = 12;
   return (
     <>
-      {/*      {detailModal && (
+      {detailModal && (
         <BucketCard
           boardId={latestDetailCard.boardId}
           nickname={latestDetailCard.nickname}
@@ -76,6 +78,8 @@ export default function NavBar() {
           cardCreated={latestDetailCard.created}
           heartCount={latestDetailCard.heartCount}
           scrapCount={latestDetailCard.scrapCount}
+          isCompleted={latestDetailCard.isCompleted}
+          putModalOptions={false}
           handleHeartClick={handleDetailHeartAndScrapClick(
             "heart",
             latestDetailCard.boardId
@@ -86,7 +90,7 @@ export default function NavBar() {
           )}
           modalCloseHandle={handleDetailModalState}
         />
-      )} */}
+      )}
       <NavBarWrapper>
         <SymbolIcon />
         <NavLinkBox>
@@ -94,7 +98,7 @@ export default function NavBar() {
             to="/"
             $width={"50px"}
             $menuNum={0}
-            $activeNum={activeNum}
+            $activeNum={navActiveNumber}
             onClick={handleMenuActive(0)}
           >
             홈
@@ -103,7 +107,7 @@ export default function NavBar() {
             to={`/search/${keyword.value ? keyword.value : "default"}`}
             $width={"60px"}
             $menuNum={1}
-            $activeNum={activeNum}
+            $activeNum={navActiveNumber}
             onClick={handleMenuActive(1)}
           >
             탐색
@@ -163,18 +167,14 @@ export default function NavBar() {
               {keywordListData.length > 0
                 ? keywordListData.map((data, idx) => {
                     return (
-                      <>
-                        <NavTag
-                          key={"keywordTag" + data.id}
-                          onClick={handleKeywordClick(data.value)}
-                        >
+                      <Fragment key={"keword" + data.id}>
+                        <NavTag onClick={handleKeywordClick(data.value)}>
                           {data.value}
                         </NavTag>
                         <NavTagDelButton
-                          key={"keywordDel" + data.id}
                           onClick={handleLatestKeywordDelete(idx)}
                         />
-                      </>
+                      </Fragment>
                     );
                   })
                 : "최근 검색하신 단어가 없습니다."}
@@ -195,7 +195,9 @@ export default function NavBar() {
                         }
                         thumnailSrc={card.filepath}
                         avatarSrc={
-                          /* card.filename */ "/images/default_profile.png"
+                          card.filename
+                            ? card.filename
+                            : "/images/default_profile.png"
                         }
                         nickname={
                           card.nickname?.length > nicknameViewLength
@@ -206,7 +208,7 @@ export default function NavBar() {
                         likeCount={card.likeCount}
                         scrapCount={card.scrapCount}
                         isCompleted={card.isCompleted}
-                        handledetailView={handleDetailCardReq(card.boardId)}
+                        handleDetailView={handleDetailCardReq(card.boardId)}
                         handleHeartClick={handleHeartAndScrapClick(
                           "heart",
                           card.boardId

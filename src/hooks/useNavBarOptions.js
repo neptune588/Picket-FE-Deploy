@@ -12,6 +12,7 @@ import {
   deleteThumnailCard,
   deleteHomeThumnailCard,
 } from "@/store/bucketThumnailSlice";
+import { setMenuActive } from "@/store/navBarMenuSlice";
 
 import { getData } from "@/services/api";
 import { postData } from "@/services/api";
@@ -33,20 +34,16 @@ export default function useNavBarOptions() {
     prevParams,
     totalParams,
     bucketDetailData,
+    navActiveNumber,
   } = useSelectorList();
 
-  const {
-    handleDetailModalState,
-    handleSearchModalState,
-    handleBucketChangeModalState,
-  } = useModalControl();
+  const { handleDetailModalState, handleSearchModalState } = useModalControl();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userNickName, setUserNickName] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [keywordListData, setKeywordListData] = useState([]);
   const [latestDetailCard, setLatestDetailCard] = useState([]);
-  const [activeNum, setActiveNum] = useState(0);
 
   const searchTextBar = useRef();
   const mounted04 = useRef(false);
@@ -80,6 +77,12 @@ export default function useNavBarOptions() {
 
   const handleChange = (e) => {
     setSearchValue(e.target.value);
+  };
+
+  const handleMenuActive = (activeNum) => {
+    return () => {
+      dispatch(setMenuActive(activeNum));
+    };
   };
 
   const keywordIncludeInspect = (curKeyword) => {
@@ -148,6 +151,9 @@ export default function useNavBarOptions() {
       try {
         const { data } = await getData(`board/${boardNum}`);
         data.commentList.forEach((obj) => (obj.putOptions = false));
+
+        const latestCard = JSON.parse(localStorage.getItem("latestBucket"));
+
         dispatch(
           setDetailButcket({
             boardId: data.boardId,
@@ -161,6 +167,9 @@ export default function useNavBarOptions() {
             scrapCount: data.scrapCount,
             nickname: data.nickname,
             avatar: data.profileImg,
+            isCompleted: latestCard.find(
+              (card) => card.boardId === data.boardId
+            ).isCompleted,
           })
         );
         setLatestDetailCard(bucketDetailData);
@@ -237,12 +246,6 @@ export default function useNavBarOptions() {
     };
   };
 
-  const handleMenuActive = (num) => {
-    return () => {
-      setActiveNum(num);
-    };
-  };
-
   useEffect(() => {
     const latestKeywordList = JSON.parse(localStorage.getItem("keywordList"));
     loginCheck();
@@ -267,7 +270,7 @@ export default function useNavBarOptions() {
     searchModal,
     detailModal,
     latestDetailCard,
-    activeNum,
+    navActiveNumber,
     setSearchValue,
     handleChange,
     handleSearch,
