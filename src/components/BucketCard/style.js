@@ -231,9 +231,11 @@ const CommentListBox = styled.div`
     position: relative;
     display: flex;
     align-items: center;
+    margin-bottom: 5px;
     > img {
-      width: 35px;
-      height: 35px;
+      flex: 0 0 auto;
+      width: 30px;
+      height: 30px;
       overflow: hidden;
       object-fit: cover;
       border-radius: 50%;

@@ -21,9 +21,10 @@ export default function ThumnailCard({
   likeCount,
   scrapCount,
   isCompleted,
+  likeAndScrap = true,
   handleDetailView,
-  handleHeartClick,
-  handleScrapClick,
+  handleHeartClick = null,
+  handleScrapClick = null,
 }) {
   return (
     <Container $width={width}>
@@ -32,23 +33,25 @@ export default function ThumnailCard({
         <ThumnailImg thumnailSrc={thumnailSrc} />
         <h2>{title}</h2>
       </ThumnailImgBox>
-      <ProfileWrapper>
-        <ProfileAvatar nickname={nickname} avatarSrc={avatarSrc} />
-        <ButtonBox>
-          <LikeButton
-            handleHeartClick={handleHeartClick}
-            width={16}
-            height={16}
-          />
-          <span>{likeCount}</span>
-          <ScrapButton
-            handleScrapClick={handleScrapClick}
-            width={18}
-            height={18}
-          />
-          <span>{scrapCount}</span>
-        </ButtonBox>
-      </ProfileWrapper>
+      {likeAndScrap && (
+        <ProfileWrapper>
+          <ProfileAvatar nickname={nickname} avatarSrc={avatarSrc} />
+          <ButtonBox>
+            <LikeButton
+              handleHeartClick={handleHeartClick}
+              width={16}
+              height={16}
+            />
+            <span>{likeCount}</span>
+            <ScrapButton
+              handleScrapClick={handleScrapClick}
+              width={18}
+              height={18}
+            />
+            <span>{scrapCount}</span>
+          </ButtonBox>
+        </ProfileWrapper>
+      )}
     </Container>
   );
 }

@@ -26,13 +26,12 @@ export default function Browse() {
     observerRef,
     handleCategoryClick,
     handleDetailView,
-    handleDetailModalState,
+    handleDetailModalClose,
     handleHeartAndScrapClick,
     handleDetailHeartAndScrapClick,
-    handleDetailBucketDelete,
-    handleDetailBucketComplete,
   } = useBrwoseGetItem();
-  const titleViewLength = 15;
+  const nicknameViewLength = 8;
+  const titleViewLength = 12;
   return (
     <>
       {detailModal && (
@@ -52,7 +51,7 @@ export default function Browse() {
           commentList={CardDetailData.commentList}
           scrapCount={CardDetailData.scrapCount}
           isCompleted={CardDetailData.isCompleted}
-          putModalOptions={true}
+          putModalOptions={false}
           handleHeartClick={handleDetailHeartAndScrapClick(
             "heart",
             CardDetailData.boardId
@@ -61,13 +60,7 @@ export default function Browse() {
             "scrap",
             CardDetailData.boardId
           )}
-          handleDetailBucketDelete={handleDetailBucketDelete(
-            CardDetailData.boardId
-          )}
-          handleDetailBucketComplete={handleDetailBucketComplete(
-            CardDetailData.boardId
-          )}
-          modalCloseHandle={handleDetailModalState}
+          modalCloseHandle={handleDetailModalClose}
         />
       )}
       <SubTitle>
@@ -107,9 +100,13 @@ export default function Browse() {
                 }
                 thumnailSrc={card.filepath}
                 avatarSrc={
-                  /* card.filename ? card.filename :  */ "/images/default_profile.png"
+                  card.filename ? card.filename : "/images/default_profile.png"
                 }
-                nickname={card.nickname}
+                nickname={
+                  card.nickname?.length > nicknameViewLength
+                    ? card.nickname.substring(0, nicknameViewLength) + "..."
+                    : card.nickname
+                }
                 likeCount={card.likeCount}
                 scrapCount={card.scrapCount}
                 isCompleted={card.isCompleted}

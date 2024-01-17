@@ -32,14 +32,14 @@ export default function AddBucketPage() {
     categoryData,
     step,
     calanderModalState,
-    handleImageUpload,
-    handleChange,
-    handleCategoryClick,
-    handleNextStepCheck,
-    handleSubmit,
     setDate,
     setStep,
     setCalanderModalState,
+    handleImageUpload,
+    handleValueChange,
+    handleCategoryClick,
+    handleNextStepCheck,
+    handleSubmit,
   } = useAddBucket();
 
   return (
@@ -103,7 +103,7 @@ export default function AddBucketPage() {
                     name={"bucketTitle"}
                     placeholder={"제목을 입력하세요."}
                     value={valueData.bucketTitle}
-                    onChange={handleChange}
+                    onChange={handleValueChange}
                   />
                 </InputBox>
                 <InputBox>
@@ -113,7 +113,7 @@ export default function AddBucketPage() {
                     value={valueData.bucketContent}
                     name={"bucketContent"}
                     placeholder={"내용을 입력하세요."}
-                    onChange={handleChange}
+                    onChange={handleValueChange}
                   />
                 </InputBox>
                 <NextButton onClick={handleNextStepCheck}>다음</NextButton>

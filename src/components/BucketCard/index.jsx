@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ProfileAvatar from "@/components/ProfileAvatar/ProfileAvatar";
 import LikeButton from "@/components/LikeButton/LikeButton";
 import ScrapButton from "@/components/ScrapButton/ScrapButton";
+import BucketChangeModal from "@/components/BucketChangeModal";
 
 import useBucketOptions from "@/hooks/useBucketOptions";
 
@@ -48,6 +49,13 @@ export default function BucketCard({
   heartCount,
   scrapCount,
   putModalOptions = false,
+  bucketChangeModalState = null,
+  date = null,
+  setDate = null,
+  valueData = null,
+  imgData = null,
+  calanderModalState = null,
+  setCalanderModalState = null,
   isCompleted,
   commentList,
   handleHeartClick,
@@ -55,6 +63,10 @@ export default function BucketCard({
   modalCloseHandle,
   handleDetailBucketDelete = null,
   handleDetailBucketComplete = null,
+  handleValueChange = null,
+  handleImageUpload = null,
+  handleBucketChangeModalState = null,
+  handleBucketChangeSubmit = null,
 }) {
   const {
     putModal,
@@ -72,11 +84,26 @@ export default function BucketCard({
   } = useBucketOptions();
   return (
     <>
+      {bucketChangeModalState && (
+        <BucketChangeModal
+          date={date}
+          setDate={setDate}
+          valueData={valueData}
+          imgData={imgData}
+          calanderModalState={calanderModalState}
+          setCalanderModalState={setCalanderModalState}
+          handleValueChange={handleValueChange}
+          handleImageUpload={handleImageUpload}
+          handleBucketChangeModalState={handleBucketChangeModalState}
+          handleBucketChangeSubmit={handleBucketChangeSubmit}
+        />
+      )}
       {putModal && (
         <CardPutModalOuter>
           <CardPutModal>
             <h2>{title}</h2>
             <li onClick={handleDetailBucketComplete}>버킷 달성</li>
+            <li onClick={handleBucketChangeModalState}>버킷 수정</li>
             <li onClick={handleDetailBucketDelete}>버킷 삭제</li>
             <li
               onClick={() => {

@@ -1,11 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+
 import {
   setDetailButcket,
   setCommentModalState,
 } from "@/store/bucketDetailSlice";
+
+import useSelectorList from "@/hooks/useSelectorList";
 
 import { postData } from "@/services/api";
 import { getData } from "@/services/api";
@@ -16,15 +19,11 @@ export default function useBucketOptions() {
 
   const navigate = useNavigate();
 
-  const bucketDetailObj = useSelector((state) => {
-    return state.bucketDetail;
-  });
+  const { bucketDetailData } = useSelectorList();
 
   const [commentValue, setCommentValue] = useState("");
   const [putModal, setPutModal] = useState(false);
   const [commentDeleteButton, setCommentDeleteButton] = useState(false);
-
-  const { bucketDetailData } = bucketDetailObj;
 
   const commentCreateInput = useRef();
 

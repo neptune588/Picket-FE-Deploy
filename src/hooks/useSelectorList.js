@@ -16,17 +16,33 @@ export default function useSelectorList() {
   const bucketDetailObj = useSelector((state) => {
     return state.bucketDetail;
   });
+  const navBarMenuNumber = useSelector((state) => {
+    return state.navBarMenu;
+  });
 
-  const { detailModal, searchModal, profileEditModal } = moadals;
+  const {
+    detailModal,
+    searchModal,
+    profileEditModal,
+    bucketChangeModal,
+    navDetailModal,
+  } = moadals;
   const { page: homePage, totalParams: totalHomeParams } = homeParams;
   const { page, keyword, categoryList, prevParams, totalParams } = params;
-  const { homeThumnailCards, thumnailCards } = cards;
+  const {
+    homeThumnailCards,
+    thumnailCards,
+    curBoardId: curHomeThumnailBoardId,
+  } = cards;
   const { bucketDetailData, curScrollLocation } = bucketDetailObj;
+  const { activeNumber: navActiveNumber } = navBarMenuNumber;
 
   return {
     detailModal,
     searchModal,
     profileEditModal,
+    bucketChangeModal,
+    navDetailModal,
     bucketDetailData,
     curScrollLocation,
     homePage,
@@ -38,5 +54,7 @@ export default function useSelectorList() {
     totalParams,
     homeThumnailCards,
     thumnailCards,
+    curHomeThumnailBoardId,
+    navActiveNumber,
   };
 }

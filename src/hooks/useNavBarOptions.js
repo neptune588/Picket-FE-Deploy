@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 
-import { setSearchModal, setDetailBucketModal } from "@/store/modalsSlice";
 import { setKeywordParams } from "@/store/parameterSlice";
 import { setDetailButcket } from "@/store/bucketDetailSlice";
 import {
@@ -13,10 +12,12 @@ import {
   deleteThumnailCard,
   deleteHomeThumnailCard,
 } from "@/store/bucketThumnailSlice";
+import { setMenuActive } from "@/store/navBarMenuSlice";
 
 import { getData } from "@/services/api";
 import { postData } from "@/services/api";
 
+import useModalControl from "@/hooks/useModalControl";
 import useSelectorList from "@/hooks/useSelectorList";
 
 export default function useNavBarOptions() {
@@ -27,34 +28,30 @@ export default function useNavBarOptions() {
   const {
     detailModal,
     searchModal,
+    navDetailModal,
     page,
     keyword,
     categoryList,
     prevParams,
     totalParams,
     bucketDetailData,
+    navActiveNumber,
   } = useSelectorList();
+
+  const { handleNavDetailModalState, handleSearchModalState } =
+    useModalControl();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userNickName, setUserNickName] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [keywordListData, setKeywordListData] = useState([]);
   const [latestDetailCard, setLatestDetailCard] = useState([]);
-  const [activeNum, setActiveNum] = useState(0);
 
   const searchTextBar = useRef();
   const mounted04 = useRef(false);
 
   const OnClickDropdown = () => {
     setDropdownOpen(!dropdownOpen);
-  };
-
-  const handleSearchModalControl = () => {
-    dispatch(setSearchModal());
-  };
-
-  const handleDetailModalState = () => {
-    detailModal && dispatch(setDetailBucketModal());
   };
 
   const loginCheck = () => {
@@ -69,6 +66,7 @@ export default function useNavBarOptions() {
     localStorage.removeItem("userAccessToken");
     localStorage.removeItem("userId");
     localStorage.removeItem("userNickname");
+    localStorage.removeItem("userAvatar");
 
     setUserNickName("");
   };
@@ -81,6 +79,12 @@ export default function useNavBarOptions() {
 
   const handleChange = (e) => {
     setSearchValue(e.target.value);
+  };
+
+  const handleMenuActive = (activeNum) => {
+    return () => {
+      dispatch(setMenuActive(activeNum));
+    };
   };
 
   const keywordIncludeInspect = (curKeyword) => {
@@ -149,6 +153,9 @@ export default function useNavBarOptions() {
       try {
         const { data } = await getData(`board/${boardNum}`);
         data.commentList.forEach((obj) => (obj.putOptions = false));
+
+        const latestCard = JSON.parse(localStorage.getItem("latestBucket"));
+
         dispatch(
           setDetailButcket({
             boardId: data.boardId,
@@ -162,12 +169,14 @@ export default function useNavBarOptions() {
             scrapCount: data.scrapCount,
             nickname: data.nickname,
             avatar: data.profileImg,
+            isCompleted: latestCard.find(
+              (card) => card.boardId === data.boardId
+            ).isCompleted,
           })
         );
         setLatestDetailCard(bucketDetailData);
 
-        !detailModal && dispatch(setDetailBucketModal());
-
+        handleNavDetailModalState();
         //console.log(data);
       } catch (error) {
         console.error("Oh~", error);
@@ -202,19 +211,6 @@ export default function useNavBarOptions() {
     },
   });
 
-  const handleHeartAndScrapClick = (type, curBoardId) => {
-    return () => {
-      switch (type) {
-        case "heart":
-          console.log("하트 클릭했습니다.");
-          break;
-        case "scrap":
-          console.log("스크랩 클릭했습니다.");
-          break;
-      }
-    };
-  };
-
   const handleDetailHeartAndScrapClick = (type, curBoardId) => {
     return () => {
       const condition = localStorage.getItem("userAccessToken");
@@ -236,12 +232,6 @@ export default function useNavBarOptions() {
           }
         }
       }
-    };
-  };
-
-  const handleMenuActive = (num) => {
-    return () => {
-      setActiveNum(num);
     };
   };
 
@@ -267,11 +257,10 @@ export default function useNavBarOptions() {
     dropdownOpen,
     userNickName,
     searchModal,
-    detailModal,
+    navDetailModal,
     latestDetailCard,
-    activeNum,
+    navActiveNumber,
     setSearchValue,
-    handleSearchModalControl,
     handleChange,
     handleSearch,
     handleSignOut,
@@ -279,8 +268,8 @@ export default function useNavBarOptions() {
     handleKeywordClick,
     handleLatestKeywordDelete,
     handleDetailCardReq,
-    handleDetailModalState,
-    handleHeartAndScrapClick,
+    handleNavDetailModalState,
+    handleSearchModalState,
     handleDetailHeartAndScrapClick,
     handleMenuActive,
     OnClickDropdown,

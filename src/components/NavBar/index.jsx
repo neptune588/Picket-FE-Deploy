@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+
 import useNavBarOptions from "@/hooks/useNavBarOptions";
 
 import ThumnailCard from "@/components/ThumnailCard";
@@ -38,11 +40,10 @@ export default function NavBar() {
     dropdownOpen,
     userNickName,
     searchModal,
-    detailModal,
+    navDetailModal,
     latestDetailCard,
-    activeNum,
+    navActiveNumber,
     setSearchValue,
-    handleSearchModalControl,
     handleChange,
     handleSearch,
     handleSignOut,
@@ -50,8 +51,8 @@ export default function NavBar() {
     handleKeywordClick,
     handleLatestKeywordDelete,
     handleDetailCardReq,
-    handleDetailModalState,
-    handleHeartAndScrapClick,
+    handleNavDetailModalState,
+    handleSearchModalState,
     handleDetailHeartAndScrapClick,
     handleMenuActive,
     OnClickDropdown,
@@ -60,7 +61,7 @@ export default function NavBar() {
   const titleViewLength = 12;
   return (
     <>
-      {/*      {detailModal && (
+      {navDetailModal && (
         <BucketCard
           boardId={latestDetailCard.boardId}
           nickname={latestDetailCard.nickname}
@@ -76,6 +77,8 @@ export default function NavBar() {
           cardCreated={latestDetailCard.created}
           heartCount={latestDetailCard.heartCount}
           scrapCount={latestDetailCard.scrapCount}
+          isCompleted={latestDetailCard.isCompleted}
+          putModalOptions={false}
           handleHeartClick={handleDetailHeartAndScrapClick(
             "heart",
             latestDetailCard.boardId
@@ -84,9 +87,9 @@ export default function NavBar() {
             "scrap",
             latestDetailCard.boardId
           )}
-          modalCloseHandle={handleDetailModalState}
+          modalCloseHandle={handleNavDetailModalState}
         />
-      )} */}
+      )}
       <NavBarWrapper>
         <SymbolIcon />
         <NavLinkBox>
@@ -94,7 +97,7 @@ export default function NavBar() {
             to="/"
             $width={"50px"}
             $menuNum={0}
-            $activeNum={activeNum}
+            $activeNum={navActiveNumber}
             onClick={handleMenuActive(0)}
           >
             홈
@@ -103,7 +106,7 @@ export default function NavBar() {
             to={`/search/${keyword.value ? keyword.value : "default"}`}
             $width={"60px"}
             $menuNum={1}
-            $activeNum={activeNum}
+            $activeNum={navActiveNumber}
             onClick={handleMenuActive(1)}
           >
             탐색
@@ -115,7 +118,7 @@ export default function NavBar() {
             value={searchValue}
             onChange={handleChange}
             placeholder="검색"
-            onClick={handleSearchModalControl}
+            onClick={handleSearchModalState}
             onKeyUp={handleSearch}
             maxLength={15}
           />
@@ -163,18 +166,14 @@ export default function NavBar() {
               {keywordListData.length > 0
                 ? keywordListData.map((data, idx) => {
                     return (
-                      <>
-                        <NavTag
-                          key={"keywordTag" + data.id}
-                          onClick={handleKeywordClick(data.value)}
-                        >
+                      <Fragment key={"keword" + data.id}>
+                        <NavTag onClick={handleKeywordClick(data.value)}>
                           {data.value}
                         </NavTag>
                         <NavTagDelButton
-                          key={"keywordDel" + data.id}
                           onClick={handleLatestKeywordDelete(idx)}
                         />
-                      </>
+                      </Fragment>
                     );
                   })
                 : "최근 검색하신 단어가 없습니다."}
@@ -195,7 +194,9 @@ export default function NavBar() {
                         }
                         thumnailSrc={card.filepath}
                         avatarSrc={
-                          /* card.filename */ "/images/default_profile.png"
+                          card.filename
+                            ? card.filename
+                            : "/images/default_profile.png"
                         }
                         nickname={
                           card.nickname?.length > nicknameViewLength
@@ -203,25 +204,18 @@ export default function NavBar() {
                               "..."
                             : card.nickname
                         }
+                        likeAndScrap={false}
                         likeCount={card.likeCount}
                         scrapCount={card.scrapCount}
                         isCompleted={card.isCompleted}
-                        handledetailView={handleDetailCardReq(card.boardId)}
-                        handleHeartClick={handleHeartAndScrapClick(
-                          "heart",
-                          card.boardId
-                        )}
-                        handleScrapClick={handleHeartAndScrapClick(
-                          "scrap",
-                          card.boardId
-                        )}
+                        handleDetailView={handleDetailCardReq(card.boardId)}
                       />
                     )
                   )
                 : "최근 본 버킷리스트가 없습니다."}
             </ThumnailCardBox>
           </SearchModal>
-          <SearchModalCloseArea onClick={handleSearchModalControl} />
+          <SearchModalCloseArea onClick={handleSearchModalState} />
         </SearchModalWrraper>
       )}
     </>

@@ -13,29 +13,48 @@ import {
 import {
   setHomeTumnailCards,
   deleteHomeThumnailCard,
+  setHomeThumnailCurBoardId,
 } from "@/store/bucketThumnailSlice";
-import { setDetailBucketModal } from "@/store/modalsSlice";
+
 import { setDetailButcket, setScrollLocation } from "@/store/bucketDetailSlice";
+
+import useModalControl from "@/hooks/useModalControl";
+import useSelectorList from "@/hooks/useSelectorList";
+import useBucketCreateCommon from "@/hooks/useBucketCreateCommon";
 
 import { getData } from "@/services/api";
 import { postData } from "@/services/api";
 import { delData } from "@/services/api";
 import { patchData } from "@/services/api";
 
-import useSelectorList from "@/hooks/useSelectorList";
-
 export default function useMypage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const { handleDetailModalState, handleBucketChangeModalState } =
+    useModalControl();
   const {
     detailModal,
+    bucketChangeModal,
     homePage,
     totalHomeParams,
     homeThumnailCards,
     bucketDetailData,
     curScrollLocation,
+    curHomeThumnailBoardId,
   } = useSelectorList();
+  const {
+    date,
+    imgData,
+    valueData,
+    submitLoading,
+    calanderModalState,
+    setDate,
+    setSubmitLoading,
+    setCalanderModalState,
+    handleValueChange,
+    handleImageUpload,
+  } = useBucketCreateCommon();
 
   const [lastPage, setLastPage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -104,20 +123,35 @@ export default function useMypage() {
           //마지막페이지 검증로직
           //라스트페이지면 스켈레톤x axios호출x
           setLastPage(true);
-          dispatch(setHomeTumnailCards(data.content));
-          setIsLoading(false);
-
-          return;
         } else {
           setLastPage(false);
-          dispatch(setHomeTumnailCards(data.content));
-
-          setIsLoading(false);
         }
+        dispatch(setHomeTumnailCards(data.content));
       } else {
         setLastPage(true);
-        setIsLoading(false);
       }
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Oh~ :", error);
+    }
+  };
+
+  //업데이트 할때 데이터 갱신 용도
+  const homeCardRenewal = async () => {
+    try {
+      const token = `Bearer ${JSON.parse(
+        localStorage.getItem("userAccessToken")
+      )}`;
+      const { data } = await getData(
+        `board/myposts?size=${homePage.value * 8 + 8}`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      dispatch(deleteHomeThumnailCard());
+      dispatch(setHomeTumnailCards(data.content));
     } catch (error) {
       console.error("Oh~ :", error);
     }
@@ -161,7 +195,8 @@ export default function useMypage() {
       } else {
         localStorage.setItem("latestBucket", JSON.stringify([latestCard]));
       }
-      !detailModal && dispatch(setDetailBucketModal());
+
+      !detailModal && handleDetailModalState();
 
       //console.log(data);
     } catch (error) {
@@ -180,7 +215,7 @@ export default function useMypage() {
   };
 
   const handleHomeDetailModalClose = () => {
-    detailModal && dispatch(setDetailBucketModal());
+    handleDetailModalState();
     setTimeout(() => {
       window.scroll({ top: curScrollLocation, left: 0 });
     }, 50);
@@ -199,24 +234,7 @@ export default function useMypage() {
     },
     onSuccess: async () => {
       homeCardDetailReq(bucketDetailData.boardId);
-
-      try {
-        const token = `Bearer ${JSON.parse(
-          localStorage.getItem("userAccessToken")
-        )}`;
-        const { data } = await getData(
-          `board/myposts?size=${homePage.value * 8 + 8}`,
-          {
-            headers: {
-              Authorization: token,
-            },
-          }
-        );
-        dispatch(deleteHomeThumnailCard());
-        dispatch(setHomeTumnailCards(data.content));
-      } catch (error) {
-        console.error("Oh~ :", error);
-      }
+      homeCardRenewal();
     },
     onError: (error) => {
       console.error(error);
@@ -251,23 +269,7 @@ export default function useMypage() {
     },
     onSuccess: async () => {
       alert("버킷이 삭제 되었습니다!");
-      try {
-        const token = `Bearer ${JSON.parse(
-          localStorage.getItem("userAccessToken")
-        )}`;
-        const { data } = await getData(
-          `board/myposts?size=${homePage.value * 8 + 8}`,
-          {
-            headers: {
-              Authorization: token,
-            },
-          }
-        );
-        dispatch(deleteHomeThumnailCard());
-        dispatch(setHomeTumnailCards(data.content));
-      } catch (error) {
-        console.error("Oh~ :", error);
-      }
+      homeCardRenewal();
     },
     onError: (error) => {
       console.error(error);
@@ -276,6 +278,7 @@ export default function useMypage() {
 
   const handleBucketDelete = (curBoardId) => {
     return () => {
+      dispatch(setHomeThumnailCurBoardId(curBoardId));
       confirm("버킷을 삭제하시겠습니까?") && bucketDelete.mutate(curBoardId);
     };
   };
@@ -293,24 +296,8 @@ export default function useMypage() {
     },
     onSuccess: async () => {
       alert("버킷이 삭제 되었습니다!");
-      dispatch(setDetailBucketModal());
-      try {
-        const token = `Bearer ${JSON.parse(
-          localStorage.getItem("userAccessToken")
-        )}`;
-        const { data } = await getData(
-          `board/myposts?size=${homePage.value * 8 + 8}`,
-          {
-            headers: {
-              Authorization: token,
-            },
-          }
-        );
-        dispatch(deleteHomeThumnailCard());
-        dispatch(setHomeTumnailCards(data.content));
-      } catch (error) {
-        console.error("Oh~ :", error);
-      }
+      handleDetailModalState();
+      homeCardRenewal();
     },
     onError: (error) => {
       if (error.response.status === 401) {
@@ -339,25 +326,8 @@ export default function useMypage() {
     },
     onSuccess: async (res) => {
       //console.log(res);
-      try {
-        const token = `Bearer ${JSON.parse(
-          localStorage.getItem("userAccessToken")
-        )}`;
-        const { data } = await getData(
-          `board/myposts?size=${homePage.value * 8 + 8}`,
-          {
-            headers: {
-              Authorization: token,
-            },
-          }
-        );
-        dispatch(deleteHomeThumnailCard());
-        dispatch(setHomeTumnailCards(data.content));
-
-        alert("버킷을 달성하셨습니다!");
-      } catch (error) {
-        console.error("Oh~ :", error);
-      }
+      homeCardRenewal();
+      alert("버킷을 달성하셨습니다!");
     },
     onError: (error) => {
       if (error.response.status === 409) {
@@ -370,6 +340,7 @@ export default function useMypage() {
 
   const handleBucketComplete = (curBoardId) => {
     return () => {
+      dispatch(setHomeThumnailCurBoardId(curBoardId));
       confirm("버킷을 달성하시겠습니까?") && bucketComplete.mutate(curBoardId);
     };
   };
@@ -387,25 +358,7 @@ export default function useMypage() {
     },
     onSuccess: async () => {
       homeCardDetailReq(bucketDetailData.boardId);
-      try {
-        const token = `Bearer ${JSON.parse(
-          localStorage.getItem("userAccessToken")
-        )}`;
-        const { data } = await getData(
-          `board/myposts?size=${homePage.value * 8 + 8}`,
-          {
-            headers: {
-              Authorization: token,
-            },
-          }
-        );
-        dispatch(deleteHomeThumnailCard());
-        dispatch(setHomeTumnailCards(data.content));
-
-        alert("버킷을 달성하셨습니다!");
-      } catch (error) {
-        console.error("Oh~ :", error);
-      }
+      homeCardRenewal();
     },
     onError: (error) => {
       if (error.response.status === 409) {
@@ -421,6 +374,106 @@ export default function useMypage() {
       confirm("버킷을 달성하시겠습니까?") &&
         homeDetailBucketComplete.mutate(curBoardId);
     };
+  };
+
+  const handleBucketChangeModalAndSetBoardId = (curBoardId) => {
+    return () => {
+      dispatch(setHomeThumnailCurBoardId(curBoardId));
+      handleBucketChangeModalState();
+    };
+  };
+
+  const bucketChange = useMutation({
+    mutationFn: async ({ formData, boardId }) => {
+      const token = `Bearer ${JSON.parse(
+        localStorage.getItem("userAccessToken")
+      )}`;
+      return await postData(`board/${boardId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: token,
+        },
+      });
+    },
+    onSuccess: async () => {
+      alert("버킷을 수정 했습니다!");
+
+      homeCardRenewal();
+      handleBucketChangeModalState();
+    },
+    onError: (error) => {
+      console.error(error);
+    },
+  });
+
+  const detailBucketChange = useMutation({
+    mutationFn: async ({ formData, boardId }) => {
+      const token = `Bearer ${JSON.parse(
+        localStorage.getItem("userAccessToken")
+      )}`;
+      return await postData(`board/${boardId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: token,
+        },
+      });
+    },
+    onSuccess: async () => {
+      alert("버킷을 수정 했습니다!");
+
+      homeCardDetailReq(bucketDetailData.boardId);
+      homeCardRenewal();
+      handleBucketChangeModalState();
+    },
+    onError: (error) => {
+      console.error(error);
+    },
+  });
+
+  const handleBucketChangeSubmit = (e) => {
+    e.preventDefault();
+
+    if (submitLoading) {
+      return;
+    }
+    setSubmitLoading(true);
+
+    //안해도되긴하지만 중복검증
+    const { bucketTitle, bucketContent } = valueData;
+    const { postImg } = imgData;
+
+    if (bucketTitle && bucketContent && postImg) {
+      const formData = new FormData();
+
+      const contents = {
+        title: bucketTitle,
+        content: bucketContent,
+        deadline:
+          date.getFullYear() +
+          "-" +
+          String(date.getMonth() + 1).padStart(2, 0) +
+          "-" +
+          String(date.getDate()).padStart(2, 0),
+      };
+      formData.append(
+        "patchBoardRequestDTO",
+        new Blob([JSON.stringify(contents)], {
+          type: "application/json",
+        })
+      );
+      formData.append("file", postImg);
+
+      detailModal
+        ? detailBucketChange.mutate({
+            formData,
+            boardId: bucketDetailData.boardId,
+          })
+        : bucketChange.mutate({ formData, boardId: curHomeThumnailBoardId });
+    } else {
+      alert("내용 작성 밑 이미지를 업로드 해주세요!");
+    }
+
+    setSubmitLoading(false);
   };
 
   useEffect(() => {
@@ -451,6 +504,17 @@ export default function useMypage() {
       homeMouted02.current = true;
     } else {
       setHomeCardData(homeThumnailCards.data);
+
+      /*       const latestCard = JSON.parse(localStorage.getItem("latestBucket"));
+      if (latestCard && latestCard.length > 0) {
+        const refine = latestCard.map((latestCard) => {
+          const compare = homeThumnailCards.data.find((card) => {
+            return latestCard.boardId === card.boardId;
+          });
+          return compare ? compare : latestCard;
+        });
+        localStorage.setItem("latestBucket", JSON.stringify(refine));
+      } */
       /*       console.log(homeThumnailCards.data);
       console.log(
         "전역 상태에 데이터가 저장이 되었습니다. setCards를 실행합니다."
@@ -468,9 +532,15 @@ export default function useMypage() {
 
   return {
     detailModal,
+    bucketChangeModal,
     homeCardData,
     homeCardDetailData,
     isLoading,
+    date,
+    imgData,
+    valueData,
+    submitLoading,
+    calanderModalState,
     homeObserver,
     handleHomeDetailView,
     handleHomeDetailModalClose,
@@ -480,5 +550,13 @@ export default function useMypage() {
     handleBucketDelete,
     handleBucketComplete,
     handleHomeDetailBucketComplete,
+    handleBucketChangeModalState,
+    handleBucketChangeModalAndSetBoardId,
+    handleValueChange,
+    handleImageUpload,
+    handleBucketChangeSubmit,
+    setDate,
+    setSubmitLoading,
+    setCalanderModalState,
   };
 }

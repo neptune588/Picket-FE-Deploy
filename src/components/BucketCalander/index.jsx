@@ -7,15 +7,14 @@ import "@/components/BucketCalander/style.scss";
 import styled from "styled-components";
 
 const ModalOuter = styled.div`
-  position: absolute;
+  position: fixed;
   width: 100%;
   height: 100vh;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   background-color: rgba(0, 0, 0, 0.5);
-  cursor: pointer;
-  z-index: 9999999999;
+  z-index: 99999999999999999;
 `;
 
 const Container = styled.div`
@@ -55,6 +54,7 @@ const CansleButton = styled.div`
     return typo.weight.bold;
   }};
   border-radius: 15px;
+  cursor: pointer;
 `;
 
 const ConfirmButton = styled(CansleButton)`
@@ -65,6 +65,7 @@ const ConfirmButton = styled(CansleButton)`
   background-color: ${({ theme: { colors } }) => {
     return colors.primary;
   }};
+  cursor: pointer;
 `;
 export default function BucketCalander({ curdate, setCurDate, modalClose }) {
   //const [selectDate, setSelectDate] = useState(null);

@@ -31,6 +31,7 @@ export default function HomeThumnailCard({
   putOptionModalState = null,
   handleBucketDelete = null,
   handleBucketComplete = null,
+  handleBucketChangeModalAndSetBoardId,
   Dday = null,
   DdayViewState = null,
   isCompleted,
@@ -54,10 +55,13 @@ export default function HomeThumnailCard({
       {putOptionModalState && (
         <ThumnailPutModalOuter>
           <ThumnailPutModal>
-            <PutOptionList onClick={handleBucketComplete || undefined}>
+            <PutOptionList onClick={handleBucketComplete}>
               버킷 달성
             </PutOptionList>
-            <PutOptionList onClick={handleBucketDelete || undefined}>
+            <PutOptionList onClick={handleBucketChangeModalAndSetBoardId}>
+              버킷 수정
+            </PutOptionList>
+            <PutOptionList onClick={handleBucketDelete}>
               버킷 삭제
             </PutOptionList>
             <PutOptionList
