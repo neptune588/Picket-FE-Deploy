@@ -20,8 +20,13 @@ export default function useSelectorList() {
     return state.navBarMenu;
   });
 
-  const { detailModal, searchModal, profileEditModal, bucketChangeModal } =
-    moadals;
+  const {
+    detailModal,
+    searchModal,
+    profileEditModal,
+    bucketChangeModal,
+    navDetailModal,
+  } = moadals;
   const { page: homePage, totalParams: totalHomeParams } = homeParams;
   const { page, keyword, categoryList, prevParams, totalParams } = params;
   const {
@@ -37,6 +42,7 @@ export default function useSelectorList() {
     searchModal,
     profileEditModal,
     bucketChangeModal,
+    navDetailModal,
     bucketDetailData,
     curScrollLocation,
     homePage,

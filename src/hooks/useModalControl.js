@@ -2,6 +2,7 @@ import { useDispatch } from "react-redux";
 
 import {
   setDetailBucketModal,
+  setNavDetailBucketModal,
   setSearchModal,
   setBucketChangeModal,
   setProfileEditModal,
@@ -12,6 +13,10 @@ export default function useModalControl() {
 
   const handleDetailModalState = () => {
     dispatch(setDetailBucketModal());
+  };
+
+  const handleNavDetailModalState = () => {
+    dispatch(setNavDetailBucketModal());
   };
 
   const handleSearchModalState = () => {
@@ -28,6 +33,7 @@ export default function useModalControl() {
 
   return {
     handleDetailModalState,
+    handleNavDetailModalState,
     handleSearchModalState,
     handleProfileModalState,
     handleBucketChangeModalState,

@@ -421,18 +421,6 @@ export default function useBrwoseGetItem() {
       mounted04.current = true;
     } else {
       setCardData(thumnailCards.data);
-
-      //최근검색어데이터 4개 갱신
-      const latestCard = JSON.parse(localStorage.getItem("latestBucket"));
-      if (latestCard && latestCard.length > 0) {
-        const refine = latestCard.map((latestCard) => {
-          const compare = thumnailCards.data.find((card) => {
-            return latestCard.boardId === card.boardId;
-          });
-          return compare ? compare : latestCard;
-        });
-        localStorage.setItem("latestBucket", JSON.stringify(refine));
-      }
     }
   }, [thumnailCards.data]);
 

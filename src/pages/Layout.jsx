@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useLocation, Outlet } from "react-router-dom";
 
 import { useDispatch } from "react-redux";
-import { setSearchModal, setDetailBucketModal } from "@/store/modalsSlice";
+
 import { deleteThumnailCard } from "@/store/bucketThumnailSlice";
 import {
   setKeywordParams,
@@ -12,6 +12,7 @@ import {
 } from "@/store/parameterSlice";
 import { setMenuActive } from "@/store/navBarMenuSlice";
 
+import useModalControl from "@/hooks/useModalControl";
 import useSelectorList from "@/hooks/useSelectorList";
 
 import styled from "styled-components";
@@ -25,11 +26,13 @@ const CenterdContainer = styled.div`
     $isDetailModal,
     $isProfileEditModal,
     $isBucketChangeModal,
+    $isNavDetailModal,
   }) => {
     return (
       ($isSearchModal ||
         $isDetailModal ||
         $isProfileEditModal ||
+        $isNavDetailModal ||
         $isBucketChangeModal) &&
       "calc(100vh - 70px)"
     );
@@ -39,10 +42,12 @@ const CenterdContainer = styled.div`
     $isDetailModal,
     $isProfileEditModal,
     $isBucketChangeModal,
+    $isNavDetailModal,
   }) => {
     return $isSearchModal ||
       $isDetailModal ||
       $isProfileEditModal ||
+      $isNavDetailModal ||
       $isBucketChangeModal
       ? "hidden"
       : "visible";
@@ -52,16 +57,27 @@ const CenterdContainer = styled.div`
 `;
 
 export default function Layout() {
-  const { detailModal, profileEditModal, searchModal, bucketChangeModal } =
-    useSelectorList();
+  const {
+    detailModal,
+    profileEditModal,
+    searchModal,
+    bucketChangeModal,
+    navDetailModal,
+  } = useSelectorList();
+  const {
+    handleSearchModalState,
+    handleDetailModalState,
+    handleNavDetailModalState,
+  } = useModalControl();
 
   const dispatch = useDispatch();
 
   const location = useLocation();
 
   useEffect(() => {
-    searchModal && dispatch(setSearchModal());
-    detailModal && dispatch(setDetailBucketModal());
+    searchModal && handleSearchModalState();
+    detailModal && handleDetailModalState();
+    navDetailModal && handleNavDetailModalState();
 
     const browseUrl = location.pathname.split("/").includes("search");
     if (!browseUrl) {
@@ -84,6 +100,7 @@ export default function Layout() {
         $isSearchModal={searchModal}
         $isDetailModal={detailModal}
         $isBucketChangeModal={bucketChangeModal}
+        $isNavDetailModal={navDetailModal}
       >
         <Outlet />
       </CenterdContainer>

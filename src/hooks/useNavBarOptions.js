@@ -28,6 +28,7 @@ export default function useNavBarOptions() {
   const {
     detailModal,
     searchModal,
+    navDetailModal,
     page,
     keyword,
     categoryList,
@@ -37,7 +38,8 @@ export default function useNavBarOptions() {
     navActiveNumber,
   } = useSelectorList();
 
-  const { handleDetailModalState, handleSearchModalState } = useModalControl();
+  const { handleNavDetailModalState, handleSearchModalState } =
+    useModalControl();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userNickName, setUserNickName] = useState(null);
@@ -174,7 +176,7 @@ export default function useNavBarOptions() {
         );
         setLatestDetailCard(bucketDetailData);
 
-        handleDetailModalState();
+        handleNavDetailModalState();
         //console.log(data);
       } catch (error) {
         console.error("Oh~", error);
@@ -208,19 +210,6 @@ export default function useNavBarOptions() {
       console.error(error);
     },
   });
-
-  const handleHeartAndScrapClick = (type, curBoardId) => {
-    return () => {
-      switch (type) {
-        case "heart":
-          console.log("하트 클릭했습니다.");
-          break;
-        case "scrap":
-          console.log("스크랩 클릭했습니다.");
-          break;
-      }
-    };
-  };
 
   const handleDetailHeartAndScrapClick = (type, curBoardId) => {
     return () => {
@@ -268,7 +257,7 @@ export default function useNavBarOptions() {
     dropdownOpen,
     userNickName,
     searchModal,
-    detailModal,
+    navDetailModal,
     latestDetailCard,
     navActiveNumber,
     setSearchValue,
@@ -279,9 +268,8 @@ export default function useNavBarOptions() {
     handleKeywordClick,
     handleLatestKeywordDelete,
     handleDetailCardReq,
-    handleDetailModalState,
+    handleNavDetailModalState,
     handleSearchModalState,
-    handleHeartAndScrapClick,
     handleDetailHeartAndScrapClick,
     handleMenuActive,
     OnClickDropdown,

@@ -270,18 +270,6 @@ export default function useMypage() {
     onSuccess: async () => {
       alert("버킷이 삭제 되었습니다!");
       homeCardRenewal();
-
-      const latestCard = JSON.parse(localStorage.getItem("latestBucket"));
-      if (latestCard && latestCard.length > 0) {
-        const refine = [...latestCard];
-        refine.forEach((card, idx) => {
-          if (card.boardId === curHomeThumnailBoardId) {
-            refine.splice(idx, 1);
-          }
-        });
-
-        localStorage.setItem("latestBucket", JSON.stringify(refine));
-      }
     },
     onError: (error) => {
       console.error(error);
@@ -310,18 +298,6 @@ export default function useMypage() {
       alert("버킷이 삭제 되었습니다!");
       handleDetailModalState();
       homeCardRenewal();
-
-      const latestCard = JSON.parse(localStorage.getItem("latestBucket"));
-      if (latestCard && latestCard.length > 0) {
-        const refine = [...latestCard];
-        refine.forEach((card, idx) => {
-          if (card.boardId === homeCardDetailData.boardId) {
-            refine.splice(idx, 1);
-          }
-        });
-
-        localStorage.setItem("latestBucket", JSON.stringify(refine));
-      }
     },
     onError: (error) => {
       if (error.response.status === 401) {
@@ -529,7 +505,7 @@ export default function useMypage() {
     } else {
       setHomeCardData(homeThumnailCards.data);
 
-      const latestCard = JSON.parse(localStorage.getItem("latestBucket"));
+      /*       const latestCard = JSON.parse(localStorage.getItem("latestBucket"));
       if (latestCard && latestCard.length > 0) {
         const refine = latestCard.map((latestCard) => {
           const compare = homeThumnailCards.data.find((card) => {
@@ -538,7 +514,7 @@ export default function useMypage() {
           return compare ? compare : latestCard;
         });
         localStorage.setItem("latestBucket", JSON.stringify(refine));
-      }
+      } */
       /*       console.log(homeThumnailCards.data);
       console.log(
         "전역 상태에 데이터가 저장이 되었습니다. setCards를 실행합니다."

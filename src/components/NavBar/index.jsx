@@ -40,7 +40,7 @@ export default function NavBar() {
     dropdownOpen,
     userNickName,
     searchModal,
-    detailModal,
+    navDetailModal,
     latestDetailCard,
     navActiveNumber,
     setSearchValue,
@@ -51,9 +51,8 @@ export default function NavBar() {
     handleKeywordClick,
     handleLatestKeywordDelete,
     handleDetailCardReq,
-    handleDetailModalState,
+    handleNavDetailModalState,
     handleSearchModalState,
-    handleHeartAndScrapClick,
     handleDetailHeartAndScrapClick,
     handleMenuActive,
     OnClickDropdown,
@@ -62,7 +61,7 @@ export default function NavBar() {
   const titleViewLength = 12;
   return (
     <>
-      {detailModal && (
+      {navDetailModal && (
         <BucketCard
           boardId={latestDetailCard.boardId}
           nickname={latestDetailCard.nickname}
@@ -88,7 +87,7 @@ export default function NavBar() {
             "scrap",
             latestDetailCard.boardId
           )}
-          modalCloseHandle={handleDetailModalState}
+          modalCloseHandle={handleNavDetailModalState}
         />
       )}
       <NavBarWrapper>
@@ -205,18 +204,11 @@ export default function NavBar() {
                               "..."
                             : card.nickname
                         }
+                        likeAndScrap={false}
                         likeCount={card.likeCount}
                         scrapCount={card.scrapCount}
                         isCompleted={card.isCompleted}
                         handleDetailView={handleDetailCardReq(card.boardId)}
-                        handleHeartClick={handleHeartAndScrapClick(
-                          "heart",
-                          card.boardId
-                        )}
-                        handleScrapClick={handleHeartAndScrapClick(
-                          "scrap",
-                          card.boardId
-                        )}
                       />
                     )
                   )
