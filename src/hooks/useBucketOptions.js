@@ -9,6 +9,7 @@ import {
 } from "@/store/bucketDetailSlice";
 
 import useSelectorList from "@/hooks/useSelectorList";
+import useTokenReissue from "@/hooks/useTokenReissue";
 
 import { postData } from "@/services/api";
 import { getData } from "@/services/api";
@@ -20,6 +21,7 @@ export default function useBucketOptions() {
   const navigate = useNavigate();
 
   const { bucketDetailData } = useSelectorList();
+  const { tokenRequest } = useTokenReissue();
 
   const [commentValue, setCommentValue] = useState("");
   const [putModal, setPutModal] = useState(false);
@@ -74,8 +76,10 @@ export default function useBucketOptions() {
       );
     },
     onError: (error) => {
-      if (error.response.status) {
-        console.error("error");
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
+      } else {
+        console.error("error발생", error);
       }
     },
   });
@@ -112,8 +116,10 @@ export default function useBucketOptions() {
       );
     },
     onError: (error) => {
-      if (error.response.status) {
-        console.error("error");
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
+      } else {
+        console.error("error발생", error);
       }
     },
   });

@@ -139,18 +139,14 @@ export default function MyProfile() {
             <form onSubmit={profileEditReq}>
               <UpLoadBox>
                 <label htmlFor="profileUpload">
-                  {previewImg ? (
-                    <img src={previewImg} alt={previewImg} />
-                  ) : (
-                    <img
-                      src={
-                        localStorage.getItem("userAvatar")
-                          ? localStorage.getItem("userAvatar")
-                          : "/images/default_preview_img.png"
-                      }
-                      alt={"profile_preview_avatar"}
-                    ></img>
-                  )}
+                  <img
+                    src={
+                      previewImg
+                        ? previewImg
+                        : "/images/default_preview_img.png"
+                    }
+                    alt={previewImg}
+                  />
 
                   <input
                     type="file"
@@ -192,8 +188,8 @@ export default function MyProfile() {
           <div>
             <img
               src={
-                localStorage.getItem("userAvatar")
-                  ? localStorage.getItem("userAvatar")
+                JSON.parse(localStorage.getItem("userAvatar"))
+                  ? JSON.parse(localStorage.getItem("userAvatar"))
                   : "/images/default_preview_img.png"
               }
               alt={"profile_preview_avatar"}

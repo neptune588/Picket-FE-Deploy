@@ -46,15 +46,19 @@ export default function useSignIn() {
     //성공시
     onSuccess: (JWT) => {
       const { data: tokenData } = JWT;
-      console.log(tokenData);
+      //console.log(tokenData);
       //localstroge는 오직 문자열 형태의 key,value만 가능하다.
       localStorage.setItem(
         "userAccessToken",
         JSON.stringify(tokenData.accessToken)
       );
+      localStorage.setItem(
+        "userRefreshToken",
+        JSON.stringify(tokenData.refreshToken)
+      );
       localStorage.setItem("userId", JSON.stringify(tokenData.memberId));
       localStorage.setItem("userNickname", JSON.stringify(tokenData.nickname));
-      //localStorage.setItem("userAvatar", JSON.stringify(null));
+      localStorage.setItem("userAvatar", JSON.stringify(tokenData.profileUrl));
       setValues({ userLoginEmail: "", userLoginPassword: "" });
       setErrors({
         emailInvaildNotice: "",
