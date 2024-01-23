@@ -4,6 +4,7 @@ import { categoriesData } from "@/utils/categoryData";
 import { useMutation } from "@tanstack/react-query";
 
 import useBucketCreateCommon from "@/hooks/useBucketCreateCommon";
+import useTokenReissue from "@/hooks/useTokenReissue";
 
 import { postData } from "@/services/api";
 
@@ -23,6 +24,7 @@ export default function useAddBucket() {
     handleValueChange,
     handleImageUpload,
   } = useBucketCreateCommon();
+  const { tokenRequest } = useTokenReissue();
 
   const [step, setStep] = useState(0);
   const [categoryData, setCategoryData] = useState(() => {
@@ -90,7 +92,11 @@ export default function useAddBucket() {
       navigate("/");
     },
     onError: (error) => {
-      console.error(error);
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
+      } else {
+        console.error("error");
+      }
     },
   });
 

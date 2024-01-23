@@ -19,6 +19,7 @@ import { postData } from "@/services/api";
 
 import useModalControl from "@/hooks/useModalControl";
 import useSelectorList from "@/hooks/useSelectorList";
+import useTokenReissue from "@/hooks/useTokenReissue";
 
 export default function useNavBarOptions() {
   const navigate = useNavigate();
@@ -26,17 +27,15 @@ export default function useNavBarOptions() {
   const dispatch = useDispatch();
 
   const {
-    detailModal,
     searchModal,
     navDetailModal,
     page,
     keyword,
     categoryList,
-    prevParams,
-    totalParams,
     bucketDetailData,
     navActiveNumber,
   } = useSelectorList();
+  const { tokenRequest } = useTokenReissue();
 
   const { handleNavDetailModalState, handleSearchModalState } =
     useModalControl();
@@ -207,7 +206,11 @@ export default function useNavBarOptions() {
       dispatch(setThumnailCard(data.content));
     },
     onError: (error) => {
-      console.error(error);
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
+      } else {
+        console.error("error발생", error);
+      }
     },
   });
 

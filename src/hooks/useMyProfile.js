@@ -21,6 +21,7 @@ import { setDetailButcket, setScrollLocation } from "@/store/bucketDetailSlice";
 import useModalControl from "@/hooks/useModalControl";
 import useSelectorList from "@/hooks/useSelectorList";
 import useBucketCreateCommon from "@/hooks/useBucketCreateCommon";
+import useTokenReissue from "@/hooks/useTokenReissue";
 
 import { getData } from "@/services/api";
 import { postData } from "@/services/api";
@@ -61,6 +62,7 @@ export default function useMyProfile() {
     handleValueChange,
     handleImageUpload,
   } = useBucketCreateCommon();
+  const { tokenRequest } = useTokenReissue();
 
   const [lastPage, setLastPage] = useState(false);
 
@@ -149,7 +151,7 @@ export default function useMyProfile() {
       setCompleteCount(data.finishTotal);
       setPregressCount(data.progressTotal);
     } catch (error) {
-      console.error(error);
+      console.error("error발생", error);
     }
   };
 
@@ -180,7 +182,11 @@ export default function useMyProfile() {
       }
       setIsLoading(false);
     } catch (error) {
-      console.error(error);
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
+      } else {
+        console.error("error발생", error);
+      }
     }
   };
 
@@ -202,7 +208,7 @@ export default function useMyProfile() {
       dispatch(deleteHomeThumnailCard());
       dispatch(setHomeTumnailCards(data.content));
     } catch (error) {
-      console.error("Oh~ :", error);
+      console.error("error발생", error);
     }
   };
 
@@ -251,7 +257,7 @@ export default function useMyProfile() {
 
       //console.log(data);
     } catch (error) {
-      console.error("Oh~", error);
+      console.error("error발생", error);
     }
   };
 
@@ -309,14 +315,17 @@ export default function useMyProfile() {
         }
       } catch (error) {
         const { response } = error;
-        if (response.status === 409) {
+        if (response.status === 401) {
+          tokenRequest.mutate();
+        } else if (response.status === 409) {
           setErrors({
             ...errors,
             nicknameInvaildNotice: "inVaild",
             nicknameErrorMsg: "이미 존재하는 닉네임 입니다",
           });
+        } else {
+          console.error("error발생", error);
         }
-        console.error(response);
       }
     }
   };
@@ -331,6 +340,7 @@ export default function useMyProfile() {
       totalErrorMsg: "",
     });
     setPreviewImg(null);
+    setPostImg(null);
     handleProfileModalState();
   };
 
@@ -343,7 +353,7 @@ export default function useMyProfile() {
 
     setSubmitLoading(true);
 
-    if (errors.nicknameInvaildNotice === "vaild") {
+    if (errors.nicknameInvaildNotice === "vaild" && postImg) {
       const formData = new FormData();
 
       formData.append(
@@ -367,17 +377,19 @@ export default function useMyProfile() {
         });
 
         localStorage.setItem("userNickname", JSON.stringify(res.data.nickname));
-        localStorage.setItem("userAvatar", res.data.imageUrl);
+        localStorage.setItem("userAvatar", JSON.stringify(res.data.imageUrl));
 
         alert("프로필이 수정 되었습니다!");
         handleProfileModalClose();
       } catch (error) {
-        console.error(error.status);
+        console.error("error발생", error);
       }
     } else {
       setErrors({
         ...errors,
-        nicknameErrorMsg: "닉네임이 유효한지 다시 한번 확인 해주세요!",
+        nicknameInvaildNotice: "inVaild",
+        nicknameErrorMsg:
+          "닉네임이 유효하지 않거나 사진이 업로드 되지 않았습니다!",
       });
     }
     setSubmitLoading(false);
@@ -423,7 +435,11 @@ export default function useMyProfile() {
       cardDataRenewal();
     },
     onError: (error) => {
-      console.error(error);
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
+      } else {
+        console.error("error발생", error);
+      }
     },
   });
 
@@ -451,7 +467,9 @@ export default function useMyProfile() {
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        alert("권한이 없습니다!");
+        tokenRequest.mutate();
+      } else {
+        console.error("error발생", error);
       }
     },
   });
@@ -479,10 +497,12 @@ export default function useMyProfile() {
       cardDataRenewal();
     },
     onError: (error) => {
-      if (error.response.status === 409) {
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
+      } else if (error.response.status === 409) {
         alert("이미 달성한 버킷입니다!");
       } else {
-        alert("권한이 없습니다.");
+        console.error("error발생", error);
       }
     },
   });
@@ -510,10 +530,12 @@ export default function useMyProfile() {
       cardDataRenewal();
     },
     onError: (error) => {
-      if (error.response.status === 409) {
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
+      } else if (error.response.status === 409) {
         alert("이미 달성한 버킷입니다!");
       } else {
-        console.error(error);
+        console.error("error발생", error);
       }
     },
   });
@@ -541,7 +563,11 @@ export default function useMyProfile() {
       cardDataRenewal();
     },
     onError: (error) => {
-      console.error(error);
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
+      } else {
+        console.error("error발생", error);
+      }
     },
   });
 
@@ -575,7 +601,11 @@ export default function useMyProfile() {
         dispatch(deleteHomeThumnailCard());
         dispatch(setHomeTumnailCards(data.content));
       } catch (error) {
-        console.error("Oh~ :", error);
+        if (error.response.status === 401) {
+          tokenRequest.mutate();
+        } else {
+          console.error("error발생", error);
+        }
       }
     },
     onError: (error) => {
@@ -617,7 +647,11 @@ export default function useMyProfile() {
       handleBucketChangeModalState();
     },
     onError: (error) => {
-      console.error(error);
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
+      } else {
+        console.error("error발생", error);
+      }
     },
   });
 
@@ -641,7 +675,11 @@ export default function useMyProfile() {
       handleBucketChangeModalState();
     },
     onError: (error) => {
-      console.error(error);
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
+      } else {
+        console.error("error발생", error);
+      }
     },
   });
 

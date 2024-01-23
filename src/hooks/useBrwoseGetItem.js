@@ -19,6 +19,7 @@ import { setDetailButcket, setScrollLocation } from "@/store/bucketDetailSlice";
 
 import useModalControl from "@/hooks/useModalControl";
 import useSelectorList from "@/hooks/useSelectorList";
+import useTokenReissue from "@/hooks/useTokenReissue";
 
 import { getData } from "@/services/api";
 import { postData } from "@/services/api";
@@ -45,6 +46,7 @@ export default function useBrwoseGetItem() {
     bucketDetailData,
     curScrollLocation,
   } = useSelectorList();
+  const { tokenRequest } = useTokenReissue();
 
   const [dummy, setDummy] = useState([
     { id: "sklt01" },
@@ -244,9 +246,9 @@ export default function useBrwoseGetItem() {
       //console.log(data);
     } catch (error) {
       if (error.response.status === 401) {
-        console.error("error입니다.");
+        console.error("error발생");
       }
-      console.error("Oh~", error);
+      console.error("error발생", error);
     }
   };
 
@@ -291,8 +293,8 @@ export default function useBrwoseGetItem() {
     },
 
     onError: (error) => {
-      if (error.response.status) {
-        console.error("에러러");
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
       }
     },
   });
@@ -323,8 +325,10 @@ export default function useBrwoseGetItem() {
       }
     },
     onError: (error) => {
-      if (error.response.status) {
-        console.error("에러러");
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
+      } else {
+        console.error("error발생", error);
       }
     },
   });

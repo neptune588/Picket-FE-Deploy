@@ -21,6 +21,7 @@ import { setDetailButcket, setScrollLocation } from "@/store/bucketDetailSlice";
 import useModalControl from "@/hooks/useModalControl";
 import useSelectorList from "@/hooks/useSelectorList";
 import useBucketCreateCommon from "@/hooks/useBucketCreateCommon";
+import useTokenReissue from "@/hooks/useTokenReissue";
 
 import { getData } from "@/services/api";
 import { postData } from "@/services/api";
@@ -55,6 +56,7 @@ export default function useMypage() {
     handleValueChange,
     handleImageUpload,
   } = useBucketCreateCommon();
+  const { tokenRequest } = useTokenReissue();
 
   const [lastPage, setLastPage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -132,7 +134,11 @@ export default function useMypage() {
       }
       setIsLoading(false);
     } catch (error) {
-      console.error("Oh~ :", error);
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
+      } else {
+        console.error("error발생", error);
+      }
     }
   };
 
@@ -201,9 +207,10 @@ export default function useMypage() {
       //console.log(data);
     } catch (error) {
       if (error.response.status === 401) {
-        console.error("error입니다.");
+        console.error("error발생");
+      } else {
+        console.error("error발생", error);
       }
-      console.error("Oh~", error);
     }
   };
 
@@ -237,7 +244,7 @@ export default function useMypage() {
       homeCardRenewal();
     },
     onError: (error) => {
-      console.error(error);
+      console.log(error);
     },
   });
 
@@ -301,7 +308,9 @@ export default function useMypage() {
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        alert("로그인이 만료 되었습니다!");
+        tokenRequest.mutate();
+      } else {
+        console.error("error발생", error);
       }
     },
   });
@@ -330,10 +339,13 @@ export default function useMypage() {
       alert("버킷을 달성하셨습니다!");
     },
     onError: (error) => {
-      if (error.response.status === 409) {
+      const { response } = error;
+      if (response.status === 401) {
+        tokenRequest.mutate();
+      } else if (response.status === 409) {
         alert("이미 달성한 버킷입니다!");
       } else {
-        console.error(error);
+        console.error("error발생", error);
       }
     },
   });
@@ -361,10 +373,13 @@ export default function useMypage() {
       homeCardRenewal();
     },
     onError: (error) => {
-      if (error.response.status === 409) {
+      const { response } = error;
+      if (response.status === 401) {
+        tokenRequest.mutate();
+      } else if (response.status === 409) {
         alert("이미 달성한 버킷입니다!");
       } else {
-        console.error(error);
+        console.error("error발생", error);
       }
     },
   });
@@ -402,7 +417,11 @@ export default function useMypage() {
       handleBucketChangeModalState();
     },
     onError: (error) => {
-      console.error(error);
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
+      } else {
+        console.error("error발생", error);
+      }
     },
   });
 
@@ -426,7 +445,11 @@ export default function useMypage() {
       handleBucketChangeModalState();
     },
     onError: (error) => {
-      console.error(error);
+      if (error.response.status === 401) {
+        tokenRequest.mutate();
+      } else {
+        console.error("error발생", error);
+      }
     },
   });
 
