@@ -4,6 +4,8 @@ import { useMutation } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 import { useInView } from "react-intersection-observer";
 
+import axios from "axios";
+
 import {
   setTotalHomeParams,
   setLastBoardHomeParams,
@@ -13,7 +15,7 @@ import {
 import {
   setHomeTumnailCards,
   deleteHomeThumnailCard,
-  setHomeThumnailCurBoardId,
+  setCurBoardId,
 } from "@/store/bucketThumnailSlice";
 
 import { setDetailButcket, setScrollLocation } from "@/store/bucketDetailSlice";
@@ -48,7 +50,7 @@ export default function useMyProfile() {
     homeThumnailCards,
     bucketDetailData,
     curScrollLocation,
-    curHomeThumnailBoardId,
+    curBoardId,
   } = useSelectorList();
   const {
     date,
@@ -85,6 +87,11 @@ export default function useMyProfile() {
   });
   const [postImg, setPostImg] = useState(null);
   const [previewImg, setPreviewImg] = useState(null);
+  const [curFormData, setCurFormData] = useState(null);
+
+  const [clickDataType, setClickDataType] = useState(null);
+
+  const [reqCount, setReqCount] = useState(0);
 
   const profileMouted01 = useRef();
   const profileMouted02 = useRef();
@@ -136,6 +143,21 @@ export default function useMyProfile() {
     },
   });
 
+  const requestRetry = (callback) => {
+    if (reqCount < 2) {
+      tokenRequest.mutate();
+      callback();
+    } else {
+      localStorage.removeItem("userAccessToken");
+      localStorage.removeItem("userRefreshToken");
+      localStorage.removeItem("userNickname");
+      localStorage.removeItem("userAvatar");
+
+      alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
+        navigate("/auth/signin");
+    }
+  };
+
   const profileCompleteCountReq = async () => {
     try {
       const token = `Bearer ${JSON.parse(
@@ -148,10 +170,18 @@ export default function useMyProfile() {
         },
       });
 
+      setReqCount(0);
       setCompleteCount(data.finishTotal);
       setPregressCount(data.progressTotal);
     } catch (error) {
-      console.error("error발생", error);
+      if (error.response.status === 401) {
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          profileCompleteCountReq();
+        });
+      } else {
+        console.error("count request error발생", error);
+      }
     }
   };
 
@@ -171,6 +201,7 @@ export default function useMyProfile() {
           },
         }
       );
+      setReqCount(0);
       //console.log(data);
       if (Array.isArray(data.content) && data.content.length > 0) {
         data.last && setLastPage(true);
@@ -183,9 +214,12 @@ export default function useMyProfile() {
       setIsLoading(false);
     } catch (error) {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          profileCardDataReq(`${homePage.key + 0}`, clickDataType);
+        });
       } else {
-        console.error("error발생", error);
+        console.error("data request error발생", error);
       }
     }
   };
@@ -263,7 +297,7 @@ export default function useMyProfile() {
 
   const handleBucketChangeModalAndSetBoardId = (curBoardId) => {
     return () => {
-      dispatch(setHomeThumnailCurBoardId(curBoardId));
+      dispatch(setCurBoardId(curBoardId));
       handleBucketChangeModalState();
     };
   };
@@ -281,6 +315,49 @@ export default function useMyProfile() {
     setPostImg(files[0]);
   };
 
+  const nicknameRepeatReq = useMutation({
+    mutationFn: async () => {
+      const token = `Bearer ${JSON.parse(
+        localStorage.getItem("userAccessToken")
+      )}`;
+
+      return await postData(
+        "member/profile/check-nickname",
+        JSON.stringify({ nickname: nikcnameValue }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token,
+          },
+        }
+      );
+    },
+    onSuccess: (res) => {
+      setReqCount(0);
+      console.log(res);
+      setErrors({
+        ...errors,
+        nicknameInvaildNotice: "vaild",
+      });
+    },
+    onError: (error) => {
+      const { response } = error;
+      if (response.status === 401) {
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          nicknameRepeatReq.mutate();
+        });
+      } else if (response.status === 409) {
+        setErrors({
+          ...errors,
+          nicknameInvaildNotice: "inVaild",
+          nicknameErrorMsg: "이미 존재하는 닉네임 입니다",
+        });
+      } else {
+        console.error("error발생", error);
+      }
+    },
+  });
   const handleNicknameRepeatCheck = async (e) => {
     e.preventDefault();
 
@@ -290,43 +367,9 @@ export default function useMyProfile() {
         nicknameInvaildNotice: "inVaild",
         nicknameErrorMsg: "닉네임은 2~6자 사이의 한글만 가능합니다!",
       });
+      return;
     } else {
-      try {
-        const token = `Bearer ${JSON.parse(
-          localStorage.getItem("userAccessToken")
-        )}`;
-
-        const res = await postData(
-          "member/profile/check-nickname",
-          JSON.stringify({ nickname: nikcnameValue }),
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: token,
-            },
-          }
-        );
-
-        if (res.status === 200) {
-          setErrors({
-            ...errors,
-            nicknameInvaildNotice: "vaild",
-          });
-        }
-      } catch (error) {
-        const { response } = error;
-        if (response.status === 401) {
-          tokenRequest.mutate();
-        } else if (response.status === 409) {
-          setErrors({
-            ...errors,
-            nicknameInvaildNotice: "inVaild",
-            nicknameErrorMsg: "이미 존재하는 닉네임 입니다",
-          });
-        } else {
-          console.error("error발생", error);
-        }
-      }
+      nicknameRepeatReq.mutate();
     }
   };
 
@@ -343,6 +386,40 @@ export default function useMyProfile() {
     setPostImg(null);
     handleProfileModalState();
   };
+
+  const profileEdit = useMutation({
+    mutationFn: async (formData) => {
+      const token = `Bearer ${JSON.parse(
+        localStorage.getItem("userAccessToken")
+      )}`;
+
+      return await postData(`member/profile`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: token,
+        },
+      });
+    },
+    onSuccess: async (res) => {
+      setReqCount(0);
+
+      localStorage.setItem("userNickname", JSON.stringify(res.data.nickname));
+      localStorage.setItem("userAvatar", JSON.stringify(res.data.imageUrl));
+
+      alert("프로필이 수정 되었습니다!");
+      handleProfileModalClose();
+    },
+    onError: (error) => {
+      if (error.response.status === 401) {
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          profileEdit.mutate(curFormData);
+        });
+      } else {
+        console.error("error발생", error);
+      }
+    },
+  });
 
   const profileEditReq = async (e) => {
     e.preventDefault();
@@ -364,26 +441,8 @@ export default function useMyProfile() {
       );
       formData.append("file", postImg);
 
-      try {
-        const token = `Bearer ${JSON.parse(
-          localStorage.getItem("userAccessToken")
-        )}`;
-
-        const res = await postData(`member/profile`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: token,
-          },
-        });
-
-        localStorage.setItem("userNickname", JSON.stringify(res.data.nickname));
-        localStorage.setItem("userAvatar", JSON.stringify(res.data.imageUrl));
-
-        alert("프로필이 수정 되었습니다!");
-        handleProfileModalClose();
-      } catch (error) {
-        console.error("error발생", error);
-      }
+      setCurFormData(formData);
+      profileEdit.mutate(formData);
     } else {
       setErrors({
         ...errors,
@@ -399,9 +458,14 @@ export default function useMyProfile() {
     return () => {
       setActiveNumber(curMenuNum);
       pageAndBoardDataReset();
-      curMenuNum === 0
-        ? profileCardDataReq(homePage.key + 0, "myCard")
-        : profileCardDataReq(homePage.key + 0, "scrap");
+
+      if (curMenuNum === 0) {
+        setClickDataType("myCard");
+        profileCardDataReq(homePage.key + 0, "myCard");
+      } else {
+        setClickDataType("scrap");
+        profileCardDataReq(homePage.key + 0, "scrap");
+      }
     };
   };
 
@@ -431,12 +495,16 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       alert("버킷이 삭제 되었습니다!");
       cardDataRenewal();
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          bucketDelete.mutate(curBoardId);
+        });
       } else {
         console.error("error발생", error);
       }
@@ -461,13 +529,17 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       alert("버킷이 삭제 되었습니다!");
       handleDetailModalState();
       cardDataRenewal();
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          myDetailBucketDelete.mutate(profileCardDetailData.boardId);
+        });
       } else {
         console.error("error발생", error);
       }
@@ -493,12 +565,16 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       alert("버킷을 달성하셨습니다!");
       cardDataRenewal();
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          bucketComplete.mutate(curBoardId);
+        });
       } else if (error.response.status === 409) {
         alert("이미 달성한 버킷입니다!");
       } else {
@@ -525,13 +601,17 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       cardDetailReq(bucketDetailData.boardId);
       alert("버킷을 달성하셨습니다!");
       cardDataRenewal();
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          myDetailBucketComplete.mutate(profileCardDetailData.boardId);
+        });
       } else if (error.response.status === 409) {
         alert("이미 달성한 버킷입니다!");
       } else {
@@ -559,12 +639,16 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       cardDetailReq(bucketDetailData.boardId);
       cardDataRenewal();
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          MyCardDetailLikeReq.mutate(`${profileCardDetailData.boardId}/like`);
+        });
       } else {
         console.error("error발생", error);
       }
@@ -584,6 +668,7 @@ export default function useMyProfile() {
     },
 
     onSuccess: async () => {
+      setReqCount(0);
       cardDetailReq(bucketDetailData.boardId);
       try {
         const token = `Bearer ${JSON.parse(
@@ -602,7 +687,12 @@ export default function useMyProfile() {
         dispatch(setHomeTumnailCards(data.content));
       } catch (error) {
         if (error.response.status === 401) {
-          tokenRequest.mutate();
+          setReqCount((prev) => prev + 1);
+          requestRetry(() => {
+            ScrapCardDetailLikeReq.mutate(
+              `${profileCardDetailData.boardId}/like`
+            );
+          });
         } else {
           console.error("error발생", error);
         }
@@ -641,6 +731,7 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       alert("버킷을 수정 했습니다!");
 
       cardDataRenewal();
@@ -648,7 +739,13 @@ export default function useMyProfile() {
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          bucketChange.mutate({
+            formData: curFormData,
+            boardId: curBoardId,
+          });
+        });
       } else {
         console.error("error발생", error);
       }
@@ -668,6 +765,7 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       alert("버킷을 수정 했습니다!");
 
       cardDetailReq(bucketDetailData.boardId);
@@ -676,7 +774,13 @@ export default function useMyProfile() {
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          detailBucketChange.mutate({
+            formData: curFormData,
+            boardId: profileCardDetailData.boardId,
+          });
+        });
       } else {
         console.error("error발생", error);
       }
@@ -716,12 +820,13 @@ export default function useMyProfile() {
       );
       formData.append("file", postImg);
 
+      setCurFormData(formData);
       detailModal
         ? detailBucketChange.mutate({
             formData,
             boardId: bucketDetailData.boardId,
           })
-        : bucketChange.mutate({ formData, boardId: curHomeThumnailBoardId });
+        : bucketChange.mutate({ formData, boardId: curBoardId });
     } else {
       alert("내용 작성 밑 이미지를 업로드 해주세요!");
     }
@@ -734,8 +839,10 @@ export default function useMyProfile() {
       navigate("/");
     } else {
       pageAndBoardDataReset();
-      profileCardDataReq(`${homePage.key + 0}`, "myCard");
-      profileCompleteCountReq();
+      axios.all([
+        profileCardDataReq(`${homePage.key + 0}`, "myCard"),
+        profileCompleteCountReq(),
+      ]);
     }
   }, []);
 

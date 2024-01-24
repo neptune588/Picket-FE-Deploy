@@ -67,6 +67,7 @@ export default function SignIn() {
               onClick={() =>
                 window.open(
                   "https://picket.store/oauth2/authorization/google",
+                  "noopener",
                   "_blank"
                 )
               }

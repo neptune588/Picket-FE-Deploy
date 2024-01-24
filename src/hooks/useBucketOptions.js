@@ -26,8 +26,26 @@ export default function useBucketOptions() {
   const [commentValue, setCommentValue] = useState("");
   const [putModal, setPutModal] = useState(false);
   const [commentDeleteButton, setCommentDeleteButton] = useState(false);
+  const [curEventCommentId, setCurEventCommentId] = useState(null);
+
+  const [reqCount, setReqCount] = useState(0);
 
   const commentCreateInput = useRef();
+
+  const requestRetry = (callback) => {
+    if (reqCount < 2) {
+      tokenRequest.mutate();
+      callback();
+    } else {
+      alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
+        navigate("/auth/signin");
+
+      localStorage.removeItem("userAccessToken");
+      localStorage.removeItem("userRefreshToken");
+      localStorage.removeItem("userNickname");
+      localStorage.removeItem("userAvatar");
+    }
+  };
 
   const handleChange = (e) => {
     setCommentValue(e.target.value);
@@ -56,6 +74,8 @@ export default function useBucketOptions() {
       });
     },
     onSuccess: async (res) => {
+      setReqCount(0);
+      handleCurCommentDel();
       alert(res.data.message);
       const { data } = await getData(`board/${bucketDetailData.boardId}`);
       data.commentList.forEach((obj) => (obj.putOptions = false));
@@ -77,47 +97,13 @@ export default function useBucketOptions() {
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
-      } else {
-        console.error("error발생", error);
-      }
-    },
-  });
-
-  const commentDelReq = useMutation({
-    mutationFn: async ({ boardId, commentId }) => {
-      const token = `Bearer ${JSON.parse(
-        localStorage.getItem("userAccessToken")
-      )}`;
-      return await delData(`board/${boardId}/comments/${commentId}`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-    },
-    onSuccess: async (res) => {
-      alert(res.data.message);
-      const { data } = await getData(`board/${bucketDetailData.boardId}`);
-      data.commentList.forEach((obj) => (obj.putOptions = false));
-      dispatch(
-        setDetailButcket({
-          boardId: data.boardId,
-          title: data.title,
-          categoryList: data.categoryList,
-          cardContent: data.content,
-          cardImg: data.filepath,
-          created: data.deadline.split("-").join("."),
-          commentList: data.commentList,
-          heartCount: data.heartCount,
-          scrapCount: data.scrapCount,
-          nickname: data.nickname,
-          avatar: data.profileImg,
-        })
-      );
-    },
-    onError: (error) => {
-      if (error.response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          createCommentReq.mutate({
+            boardId: bucketDetailData.boardId,
+            content: JSON.stringify({ content: commentValue }),
+          });
+        });
       } else {
         console.error("error발생", error);
       }
@@ -136,14 +122,61 @@ export default function useBucketOptions() {
         boardId: boardId,
         content: JSON.stringify({ content: commentValue }),
       });
-      handleCurCommentDel();
     }
   };
+
+  const commentDelReq = useMutation({
+    mutationFn: async ({ boardId, commentId }) => {
+      const token = `Bearer ${JSON.parse(
+        localStorage.getItem("userAccessToken")
+      )}`;
+      return await delData(`board/${boardId}/comments/${commentId}`, {
+        headers: {
+          Authorization: token,
+        },
+      });
+    },
+    onSuccess: async (res) => {
+      setReqCount(0);
+      alert(res.data.message);
+      const { data } = await getData(`board/${bucketDetailData.boardId}`);
+      data.commentList.forEach((obj) => (obj.putOptions = false));
+      dispatch(
+        setDetailButcket({
+          boardId: data.boardId,
+          title: data.title,
+          categoryList: data.categoryList,
+          cardContent: data.content,
+          cardImg: data.filepath,
+          created: data.deadline.split("-").join("."),
+          commentList: data.commentList,
+          heartCount: data.heartCount,
+          scrapCount: data.scrapCount,
+          nickname: data.nickname,
+          avatar: data.profileImg,
+        })
+      );
+    },
+    onError: (error) => {
+      if (error.response.status === 401) {
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          commentDelReq.mutate({
+            boardId: bucketDetailData.boardId,
+            commentId: curEventCommentId,
+          });
+        });
+      } else {
+        console.error("error발생", error);
+      }
+    },
+  });
 
   const handleCommentDelReq = (boardId, commentId) => {
     return () => {
       const question = confirm("댓글을 삭제 하시겠습니까?");
       if (question) {
+        setCurEventCommentId(commentId);
         commentDelReq.mutate({ boardId, commentId });
       }
     };

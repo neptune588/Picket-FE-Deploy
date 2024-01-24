@@ -44,7 +44,9 @@ export default function useNavBarOptions() {
   const [userNickName, setUserNickName] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [keywordListData, setKeywordListData] = useState([]);
-  const [latestDetailCard, setLatestDetailCard] = useState([]);
+  const [latestDetailCard, setLatestDetailCard] = useState({});
+  const [clickButtonType, setClickButtonType] = useState(null);
+  const [reqCount, setReqCount] = useState(0);
 
   const searchTextBar = useRef();
   const mounted04 = useRef(false);
@@ -66,8 +68,6 @@ export default function useNavBarOptions() {
     localStorage.removeItem("userId");
     localStorage.removeItem("userNickname");
     localStorage.removeItem("userAvatar");
-
-    setUserNickName("");
   };
 
   const handleNavigate = (params) => {
@@ -178,7 +178,7 @@ export default function useNavBarOptions() {
         handleNavDetailModalState();
         //console.log(data);
       } catch (error) {
-        console.error("Oh~", error);
+        console.error("error발생", error);
       }
     };
   };
@@ -195,6 +195,7 @@ export default function useNavBarOptions() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       handleDetailCardReq(bucketDetailData.boardId);
       const { data } = await getData(
         `board/list/search?size=${page.value * 8 + 8}${
@@ -203,11 +204,24 @@ export default function useNavBarOptions() {
       );
       dispatch(deleteThumnailCard());
       dispatch(deleteHomeThumnailCard());
+
       dispatch(setThumnailCard(data.content));
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        if (reqCount < 2) {
+          tokenRequest.mutate();
+          detailLikeAndScrapReq(`${latestDetailCard}/${clickButtonType}`);
+        } else {
+          localStorage.removeItem("userAccessToken");
+          localStorage.removeItem("userRefreshToken");
+          localStorage.removeItem("userNickname");
+          localStorage.removeItem("userAvatar");
+
+          alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
+            navigate("/auth/signin");
+        }
       } else {
         console.error("error발생", error);
       }
@@ -226,10 +240,12 @@ export default function useNavBarOptions() {
       } else {
         switch (type) {
           case "heart": {
+            setClickButtonType("like");
             detailLikeAndScrapReq.mutate(`${curBoardId}/like`);
             break;
           }
           case "scrap": {
+            setClickButtonType("scrap");
             detailLikeAndScrapReq.mutate(`${curBoardId}/scrap`);
             break;
           }

@@ -13,7 +13,7 @@ import {
 import {
   setHomeTumnailCards,
   deleteHomeThumnailCard,
-  setHomeThumnailCurBoardId,
+  setCurBoardId,
 } from "@/store/bucketThumnailSlice";
 
 import { setDetailButcket, setScrollLocation } from "@/store/bucketDetailSlice";
@@ -42,7 +42,7 @@ export default function useMypage() {
     homeThumnailCards,
     bucketDetailData,
     curScrollLocation,
-    curHomeThumnailBoardId,
+    curBoardId,
   } = useSelectorList();
   const {
     date,
@@ -62,6 +62,11 @@ export default function useMypage() {
   const [isLoading, setIsLoading] = useState(true);
   const [homeCardData, setHomeCardData] = useState([]);
   const [homeCardDetailData, setHomeCardDetailData] = useState({});
+  //토큰 재요청시 정보 저장해놓기 위해 (좋아요인가 스크랩인가)
+  const [clickButtonType, setClickButtonType] = useState(null);
+  const [curFormData, setCurFormData] = useState(null);
+
+  const [reqCount, setReqCount] = useState(0);
 
   const homeMouted01 = useRef();
   const homeMouted02 = useRef();
@@ -98,6 +103,21 @@ export default function useMypage() {
     },
   });
 
+  const requestRetry = (callback) => {
+    if (reqCount < 2) {
+      tokenRequest.mutate();
+      callback();
+    } else {
+      alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
+        navigate("/auth/signin");
+
+      localStorage.removeItem("userAccessToken");
+      localStorage.removeItem("userRefreshToken");
+      localStorage.removeItem("userNickname");
+      localStorage.removeItem("userAvatar");
+    }
+  };
+
   const handleAddBucket = () => {
     const loginCheck = localStorage.getItem("userAccessToken");
     if (loginCheck) {
@@ -114,12 +134,13 @@ export default function useMypage() {
         localStorage.getItem("userAccessToken")
       )}`;
       setIsLoading(true);
-      const { data } = await getData(`board/myposts?${query}`, {
+      const { data, status } = await getData(`board/myposts?${query}`, {
         headers: {
           Authorization: token,
         },
       });
 
+      status === 200 && setReqCount(0);
       if (data.content?.length > 0) {
         if (data.last) {
           //마지막페이지 검증로직
@@ -135,7 +156,10 @@ export default function useMypage() {
       setIsLoading(false);
     } catch (error) {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          homeCardReq(`${homePage.key + 0}`);
+        });
       } else {
         console.error("error발생", error);
       }
@@ -159,7 +183,7 @@ export default function useMypage() {
       dispatch(deleteHomeThumnailCard());
       dispatch(setHomeTumnailCards(data.content));
     } catch (error) {
-      console.error("Oh~ :", error);
+      console.error("error발생", error);
     }
   };
 
@@ -240,11 +264,21 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       homeCardDetailReq(bucketDetailData.boardId);
       homeCardRenewal();
     },
     onError: (error) => {
-      console.log(error);
+      if (error.response.status === 401) {
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          detailLikeAndScrapReq.mutate(
+            `${homeCardDetailData.boardId}/${clickButtonType}`
+          );
+        });
+      } else {
+        console.error("error발생", error);
+      }
     },
   });
 
@@ -252,10 +286,12 @@ export default function useMypage() {
     return () => {
       switch (type) {
         case "heart": {
+          setClickButtonType("like");
           detailLikeAndScrapReq.mutate(`${curBoardId}/like`);
           break;
         }
         case "scrap": {
+          setClickButtonType("scrap");
           detailLikeAndScrapReq.mutate(`${curBoardId}/scrap`);
           break;
         }
@@ -275,17 +311,25 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       alert("버킷이 삭제 되었습니다!");
       homeCardRenewal();
     },
     onError: (error) => {
-      console.error(error);
+      if (error.response.status === 401) {
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          bucketDelete.mutate(curBoardId);
+        });
+      } else {
+        console.error("error발생", error);
+      }
     },
   });
 
   const handleBucketDelete = (curBoardId) => {
     return () => {
-      dispatch(setHomeThumnailCurBoardId(curBoardId));
+      dispatch(setCurBoardId(curBoardId));
       confirm("버킷을 삭제하시겠습니까?") && bucketDelete.mutate(curBoardId);
     };
   };
@@ -302,13 +346,17 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       alert("버킷이 삭제 되었습니다!");
       handleDetailModalState();
       homeCardRenewal();
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          homeDetailBucketDelete.mutate(homeCardDetailData.boardId);
+        });
       } else {
         console.error("error발생", error);
       }
@@ -335,13 +383,17 @@ export default function useMypage() {
     },
     onSuccess: async (res) => {
       //console.log(res);
+      setReqCount(0);
       homeCardRenewal();
       alert("버킷을 달성하셨습니다!");
     },
     onError: (error) => {
       const { response } = error;
       if (response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          bucketComplete.mutate(curBoardId);
+        });
       } else if (response.status === 409) {
         alert("이미 달성한 버킷입니다!");
       } else {
@@ -352,7 +404,7 @@ export default function useMypage() {
 
   const handleBucketComplete = (curBoardId) => {
     return () => {
-      dispatch(setHomeThumnailCurBoardId(curBoardId));
+      dispatch(setCurBoardId(curBoardId));
       confirm("버킷을 달성하시겠습니까?") && bucketComplete.mutate(curBoardId);
     };
   };
@@ -369,13 +421,17 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       homeCardDetailReq(bucketDetailData.boardId);
       homeCardRenewal();
     },
     onError: (error) => {
       const { response } = error;
       if (response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          homeDetailBucketComplete.mutate(homeCardDetailData.boardId);
+        });
       } else if (response.status === 409) {
         alert("이미 달성한 버킷입니다!");
       } else {
@@ -393,7 +449,7 @@ export default function useMypage() {
 
   const handleBucketChangeModalAndSetBoardId = (curBoardId) => {
     return () => {
-      dispatch(setHomeThumnailCurBoardId(curBoardId));
+      dispatch(setCurBoardId(curBoardId));
       handleBucketChangeModalState();
     };
   };
@@ -411,6 +467,8 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
+
       alert("버킷을 수정 했습니다!");
 
       homeCardRenewal();
@@ -418,7 +476,10 @@ export default function useMypage() {
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          bucketChange.mutate({ formData: curFormData, boardId: curBoardId });
+        });
       } else {
         console.error("error발생", error);
       }
@@ -438,6 +499,7 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       alert("버킷을 수정 했습니다!");
 
       homeCardDetailReq(bucketDetailData.boardId);
@@ -446,7 +508,13 @@ export default function useMypage() {
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          detailBucketChange.mutate({
+            formData: curFormData,
+            boardId: homeCardDetailData.boardId,
+          });
+        });
       } else {
         console.error("error발생", error);
       }
@@ -485,13 +553,14 @@ export default function useMypage() {
         })
       );
       formData.append("file", postImg);
+      setCurFormData(formData);
 
       detailModal
         ? detailBucketChange.mutate({
             formData,
-            boardId: bucketDetailData.boardId,
+            boardId: homeCardDetailData.boardId,
           })
-        : bucketChange.mutate({ formData, boardId: curHomeThumnailBoardId });
+        : bucketChange.mutate({ formData, boardId: curBoardId });
     } else {
       alert("내용 작성 밑 이미지를 업로드 해주세요!");
     }

@@ -14,6 +14,7 @@ import {
 import {
   setThumnailCard,
   deleteThumnailCard,
+  setCurBoardId,
 } from "@/store/bucketThumnailSlice";
 import { setDetailButcket, setScrollLocation } from "@/store/bucketDetailSlice";
 
@@ -23,8 +24,6 @@ import useTokenReissue from "@/hooks/useTokenReissue";
 
 import { getData } from "@/services/api";
 import { postData } from "@/services/api";
-import { delData } from "@/services/api";
-import { patchData } from "@/services/api";
 
 import { categoriesData } from "@/utils/categoryData";
 
@@ -45,6 +44,7 @@ export default function useBrwoseGetItem() {
     detailModal,
     bucketDetailData,
     curScrollLocation,
+    curBoardId,
   } = useSelectorList();
   const { tokenRequest } = useTokenReissue();
 
@@ -67,6 +67,10 @@ export default function useBrwoseGetItem() {
   //데이터 불러오는동안 스켈레톤 띄우기
   const [isLoading, setIsLoading] = useState(true);
   const [CardDetailData, setCardDetailData] = useState({});
+  //토큰 재요청시 정보 저장해놓기 위해 (좋아요인가 스크랩인가)
+  const [clickButtonType, setClickButtonType] = useState(null);
+  //재귀 무한 반복 중지 카운트
+  const [reqCount, setReqCount] = useState(0);
   //첫 렌더링시 강제실행 막기
   const mounted01 = useRef(false);
   const mounted02 = useRef(false);
@@ -102,6 +106,21 @@ export default function useBrwoseGetItem() {
       }
     },
   });
+
+  const requestRetry = (callback) => {
+    if (reqCount < 2) {
+      tokenRequest.mutate();
+      callback();
+    } else {
+      alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
+        navigate("/auth/signin");
+
+      localStorage.removeItem("userAccessToken");
+      localStorage.removeItem("userRefreshToken");
+      localStorage.removeItem("userNickname");
+      localStorage.removeItem("userAvatar");
+    }
+  };
 
   //전체 카테고리로 활성화
   const activeAllCategory = () => {
@@ -201,7 +220,7 @@ export default function useBrwoseGetItem() {
       }
       setIsLoading(false);
     } catch (error) {
-      console.error("Oh~ :", error);
+      console.error("error발생", error);
     }
   };
 
@@ -245,9 +264,6 @@ export default function useBrwoseGetItem() {
 
       //console.log(data);
     } catch (error) {
-      if (error.response.status === 401) {
-        console.error("error발생");
-      }
       console.error("error발생", error);
     }
   };
@@ -278,6 +294,7 @@ export default function useBrwoseGetItem() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       //페이지는 0부터 8개이기때문에 8을 더해줘야 내가 내린만큼 나옴.
       //ex 0 1 2 3 총 스크롤 4번내려서 32개의 아이템이 받아지지만
       //page * 3을하면 24개가됨 따라서 8을 더해줘야 하는것
@@ -294,39 +311,10 @@ export default function useBrwoseGetItem() {
 
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
-      }
-    },
-  });
-
-  const detailLikeAndScrapReq = useMutation({
-    mutationFn: async (curQuery) => {
-      const token = `Bearer ${JSON.parse(
-        localStorage.getItem("userAccessToken")
-      )}`;
-      return await postData(`board/${curQuery}`, null, {
-        headers: {
-          Authorization: token,
-        },
-      });
-    },
-    onSuccess: async () => {
-      cardDetailReq(bucketDetailData.boardId);
-      try {
-        const { data } = await getData(
-          `board/list/search?size=${page.value * 8 + 8}${
-            keyword.key + keyword.value
-          }${categoryList.key + categoryList.value}`
-        );
-        dispatch(deleteThumnailCard());
-        dispatch(setThumnailCard(data.content));
-      } catch (error) {
-        console.error("받아오는데서 에러 뜸");
-      }
-    },
-    onError: (error) => {
-      if (error.response.status === 401) {
-        tokenRequest.mutate();
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          likeAndScrapReq.mutate(`${curBoardId}/${clickButtonType}`);
+        });
       } else {
         console.error("error발생", error);
       }
@@ -343,12 +331,15 @@ export default function useBrwoseGetItem() {
         question && navigate("/auth/signin");
         return;
       } else {
+        dispatch(setCurBoardId(curBoardId));
         switch (type) {
           case "heart": {
+            setClickButtonType("like");
             likeAndScrapReq.mutate(`${curBoardId}/like`);
             break;
           }
           case "scrap": {
+            setClickButtonType("scrap");
             likeAndScrapReq.mutate(`${curBoardId}/scrap`);
             break;
           }
@@ -356,6 +347,46 @@ export default function useBrwoseGetItem() {
       }
     };
   };
+
+  const detailLikeAndScrapReq = useMutation({
+    mutationFn: async (curQuery) => {
+      const token = `Bearer ${JSON.parse(
+        localStorage.getItem("userAccessToken")
+      )}`;
+      return await postData(`board/${curQuery}`, null, {
+        headers: {
+          Authorization: token,
+        },
+      });
+    },
+    onSuccess: async () => {
+      setReqCount(0);
+      cardDetailReq(bucketDetailData.boardId);
+      try {
+        const { data } = await getData(
+          `board/list/search?size=${page.value * 8 + 8}${
+            keyword.key + keyword.value
+          }${categoryList.key + categoryList.value}`
+        );
+        dispatch(deleteThumnailCard());
+        dispatch(setThumnailCard(data.content));
+      } catch (error) {
+        console.error("갱신데이터 get error발생", error);
+      }
+    },
+    onError: (error) => {
+      if (error.response.status === 401) {
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          detailLikeAndScrapReq.mutate(
+            `${CardDetailData.boardId}/${clickButtonType}`
+          );
+        });
+      } else {
+        console.error("error발생", error);
+      }
+    },
+  });
 
   const handleDetailHeartAndScrapClick = (type, curBoardId) => {
     return () => {
@@ -369,10 +400,12 @@ export default function useBrwoseGetItem() {
       } else {
         switch (type) {
           case "heart": {
+            setClickButtonType("like");
             detailLikeAndScrapReq.mutate(`${curBoardId}/like`);
             break;
           }
           case "scrap": {
+            setClickButtonType("scrap");
             detailLikeAndScrapReq.mutate(`${curBoardId}/scrap`);
             break;
           }
