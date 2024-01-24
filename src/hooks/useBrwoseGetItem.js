@@ -14,6 +14,7 @@ import {
 import {
   setThumnailCard,
   deleteThumnailCard,
+  setCurBoardId,
 } from "@/store/bucketThumnailSlice";
 import { setDetailButcket, setScrollLocation } from "@/store/bucketDetailSlice";
 
@@ -23,8 +24,6 @@ import useTokenReissue from "@/hooks/useTokenReissue";
 
 import { getData } from "@/services/api";
 import { postData } from "@/services/api";
-import { delData } from "@/services/api";
-import { patchData } from "@/services/api";
 
 import { categoriesData } from "@/utils/categoryData";
 
@@ -45,6 +44,7 @@ export default function useBrwoseGetItem() {
     detailModal,
     bucketDetailData,
     curScrollLocation,
+    curBoardId,
   } = useSelectorList();
   const { tokenRequest } = useTokenReissue();
 
@@ -67,6 +67,8 @@ export default function useBrwoseGetItem() {
   //데이터 불러오는동안 스켈레톤 띄우기
   const [isLoading, setIsLoading] = useState(true);
   const [CardDetailData, setCardDetailData] = useState({});
+  //토큰 재요청시 정보 저장해놓기 위해 (좋아요인가 스크랩인가)
+  const [clickButtonType, setClickButtonType] = useState(null);
   //첫 렌더링시 강제실행 막기
   const mounted01 = useRef(false);
   const mounted02 = useRef(false);
@@ -201,7 +203,7 @@ export default function useBrwoseGetItem() {
       }
       setIsLoading(false);
     } catch (error) {
-      console.error("Oh~ :", error);
+      console.error("error발생", error);
     }
   };
 
@@ -245,9 +247,6 @@ export default function useBrwoseGetItem() {
 
       //console.log(data);
     } catch (error) {
-      if (error.response.status === 401) {
-        console.error("error발생");
-      }
       console.error("error발생", error);
     }
   };
@@ -295,9 +294,39 @@ export default function useBrwoseGetItem() {
     onError: (error) => {
       if (error.response.status === 401) {
         tokenRequest.mutate();
+        likeAndScrapReq.mutate(`${curBoardId}/${clickButtonType}`);
+      } else {
+        console.error("error발생", error);
       }
     },
   });
+
+  const handleHeartAndScrapClick = (type, curBoardId) => {
+    return () => {
+      const condition = localStorage.getItem("userAccessToken");
+      if (!condition) {
+        const question = confirm(
+          "로그인을 하셔야 이용 가능합니다. 로그인 하시겠습니까?"
+        );
+        question && navigate("/auth/signin");
+        return;
+      } else {
+        dispatch(setCurBoardId(curBoardId));
+        switch (type) {
+          case "heart": {
+            setClickButtonType("like");
+            likeAndScrapReq.mutate(`${curBoardId}/like`);
+            break;
+          }
+          case "scrap": {
+            setClickButtonType("scrap");
+            likeAndScrapReq.mutate(`${curBoardId}/scrap`);
+            break;
+          }
+        }
+      }
+    };
+  };
 
   const detailLikeAndScrapReq = useMutation({
     mutationFn: async (curQuery) => {
@@ -321,41 +350,20 @@ export default function useBrwoseGetItem() {
         dispatch(deleteThumnailCard());
         dispatch(setThumnailCard(data.content));
       } catch (error) {
-        console.error("받아오는데서 에러 뜸");
+        console.error("갱신데이터 get error발생", error);
       }
     },
     onError: (error) => {
       if (error.response.status === 401) {
         tokenRequest.mutate();
+        detailLikeAndScrapReq.mutate(
+          `${CardDetailData.boardId}/${clickButtonType}`
+        );
       } else {
         console.error("error발생", error);
       }
     },
   });
-
-  const handleHeartAndScrapClick = (type, curBoardId) => {
-    return () => {
-      const condition = localStorage.getItem("userAccessToken");
-      if (!condition) {
-        const question = confirm(
-          "로그인을 하셔야 이용 가능합니다. 로그인 하시겠습니까?"
-        );
-        question && navigate("/auth/signin");
-        return;
-      } else {
-        switch (type) {
-          case "heart": {
-            likeAndScrapReq.mutate(`${curBoardId}/like`);
-            break;
-          }
-          case "scrap": {
-            likeAndScrapReq.mutate(`${curBoardId}/scrap`);
-            break;
-          }
-        }
-      }
-    };
-  };
 
   const handleDetailHeartAndScrapClick = (type, curBoardId) => {
     return () => {
@@ -369,10 +377,12 @@ export default function useBrwoseGetItem() {
       } else {
         switch (type) {
           case "heart": {
+            setClickButtonType("like");
             detailLikeAndScrapReq.mutate(`${curBoardId}/like`);
             break;
           }
           case "scrap": {
+            setClickButtonType("scrap");
             detailLikeAndScrapReq.mutate(`${curBoardId}/scrap`);
             break;
           }

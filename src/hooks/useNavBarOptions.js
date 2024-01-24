@@ -44,7 +44,8 @@ export default function useNavBarOptions() {
   const [userNickName, setUserNickName] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [keywordListData, setKeywordListData] = useState([]);
-  const [latestDetailCard, setLatestDetailCard] = useState([]);
+  const [latestDetailCard, setLatestDetailCard] = useState({});
+  const [clickButtonType, setClickButtonType] = useState(null);
 
   const searchTextBar = useRef();
   const mounted04 = useRef(false);
@@ -178,7 +179,7 @@ export default function useNavBarOptions() {
         handleNavDetailModalState();
         //console.log(data);
       } catch (error) {
-        console.error("Oh~", error);
+        console.error("error발생", error);
       }
     };
   };
@@ -203,11 +204,13 @@ export default function useNavBarOptions() {
       );
       dispatch(deleteThumnailCard());
       dispatch(deleteHomeThumnailCard());
+
       dispatch(setThumnailCard(data.content));
     },
     onError: (error) => {
       if (error.response.status === 401) {
         tokenRequest.mutate();
+        detailLikeAndScrapReq(`${latestDetailCard}/${clickButtonType}`);
       } else {
         console.error("error발생", error);
       }
@@ -226,10 +229,12 @@ export default function useNavBarOptions() {
       } else {
         switch (type) {
           case "heart": {
+            setClickButtonType("like");
             detailLikeAndScrapReq.mutate(`${curBoardId}/like`);
             break;
           }
           case "scrap": {
+            setClickButtonType("scrap");
             detailLikeAndScrapReq.mutate(`${curBoardId}/scrap`);
             break;
           }

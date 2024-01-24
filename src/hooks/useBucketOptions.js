@@ -26,6 +26,7 @@ export default function useBucketOptions() {
   const [commentValue, setCommentValue] = useState("");
   const [putModal, setPutModal] = useState(false);
   const [commentDeleteButton, setCommentDeleteButton] = useState(false);
+  const [curEventCommentId, setCurEventCommentId] = useState(null);
 
   const commentCreateInput = useRef();
 
@@ -56,6 +57,7 @@ export default function useBucketOptions() {
       });
     },
     onSuccess: async (res) => {
+      handleCurCommentDel();
       alert(res.data.message);
       const { data } = await getData(`board/${bucketDetailData.boardId}`);
       data.commentList.forEach((obj) => (obj.putOptions = false));
@@ -78,11 +80,30 @@ export default function useBucketOptions() {
     onError: (error) => {
       if (error.response.status === 401) {
         tokenRequest.mutate();
+        createCommentReq.mutate({
+          boardId: bucketDetailData.boardId,
+          content: JSON.stringify({ content: commentValue }),
+        });
       } else {
         console.error("error발생", error);
       }
     },
   });
+
+  const handleCommentCreate = (boardId) => {
+    if (
+      commentValue === "" ||
+      commentValue === null ||
+      commentValue === undefined
+    ) {
+      alert("댓글 내용을 작성 해주세요!");
+    } else {
+      createCommentReq.mutate({
+        boardId: boardId,
+        content: JSON.stringify({ content: commentValue }),
+      });
+    }
+  };
 
   const commentDelReq = useMutation({
     mutationFn: async ({ boardId, commentId }) => {
@@ -118,32 +139,21 @@ export default function useBucketOptions() {
     onError: (error) => {
       if (error.response.status === 401) {
         tokenRequest.mutate();
+        commentDelReq.mutate({
+          boardId: bucketDetailData.boardId,
+          commentId: curEventCommentId,
+        });
       } else {
         console.error("error발생", error);
       }
     },
   });
 
-  const handleCommentCreate = (boardId) => {
-    if (
-      commentValue === "" ||
-      commentValue === null ||
-      commentValue === undefined
-    ) {
-      alert("댓글 내용을 작성 해주세요!");
-    } else {
-      createCommentReq.mutate({
-        boardId: boardId,
-        content: JSON.stringify({ content: commentValue }),
-      });
-      handleCurCommentDel();
-    }
-  };
-
   const handleCommentDelReq = (boardId, commentId) => {
     return () => {
       const question = confirm("댓글을 삭제 하시겠습니까?");
       if (question) {
+        setCurEventCommentId(commentId);
         commentDelReq.mutate({ boardId, commentId });
       }
     };

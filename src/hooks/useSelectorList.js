@@ -29,11 +29,7 @@ export default function useSelectorList() {
   } = moadals;
   const { page: homePage, totalParams: totalHomeParams } = homeParams;
   const { page, keyword, categoryList, prevParams, totalParams } = params;
-  const {
-    homeThumnailCards,
-    thumnailCards,
-    curBoardId: curHomeThumnailBoardId,
-  } = cards;
+  const { homeThumnailCards, thumnailCards, curBoardId } = cards;
   const { bucketDetailData, curScrollLocation } = bucketDetailObj;
   const { activeNumber: navActiveNumber } = navBarMenuNumber;
 
@@ -54,7 +50,7 @@ export default function useSelectorList() {
     totalParams,
     homeThumnailCards,
     thumnailCards,
-    curHomeThumnailBoardId,
+    curBoardId,
     navActiveNumber,
   };
 }

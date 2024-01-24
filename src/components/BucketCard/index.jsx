@@ -155,8 +155,8 @@ export default function BucketCard({
                     <div>
                       <img
                         src={
-                          localStorage.getItem("userAvatar")
-                            ? localStorage.getItem("userAvatar")
+                          comment.profileUrl
+                            ? comment.profileUrl
                             : "/images/default_profile.png"
                         }
                         alt={"profile_avatar"}
@@ -223,7 +223,7 @@ export default function BucketCard({
                     <img
                       src={
                         localStorage.getItem("userAvatar")
-                          ? localStorage.getItem("userAvatar")
+                          ? JSON.parse(localStorage.getItem("userAvatar"))
                           : "/images/default_profile.png"
                       }
                       alt={"profile_avatar"}

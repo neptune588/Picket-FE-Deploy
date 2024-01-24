@@ -32,6 +32,7 @@ export default function useAddBucket() {
     data.splice(0, 1);
     return data;
   });
+  const [curFormData, setCurFormData] = useState(null);
 
   const handleCategoryClick = (activeNumber, queryNumber) => {
     return () => {
@@ -94,6 +95,7 @@ export default function useAddBucket() {
     onError: (error) => {
       if (error.response.status === 401) {
         tokenRequest.mutate();
+        bucketCreate.mutate(curFormData);
       } else {
         console.error("error");
       }
@@ -134,6 +136,7 @@ export default function useAddBucket() {
       );
       formData.append("file", postImg);
 
+      setCurFormData(formData);
       bucketCreate.mutate(formData);
     }
 
