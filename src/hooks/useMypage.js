@@ -66,6 +66,8 @@ export default function useMypage() {
   const [clickButtonType, setClickButtonType] = useState(null);
   const [curFormData, setCurFormData] = useState(null);
 
+  const [reqCount, setReqCount] = useState(0);
+
   const homeMouted01 = useRef();
   const homeMouted02 = useRef();
   const homeMouted03 = useRef();
@@ -101,6 +103,21 @@ export default function useMypage() {
     },
   });
 
+  const requestRetry = (callback) => {
+    if (reqCount < 2) {
+      tokenRequest.mutate();
+      callback();
+    } else {
+      alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
+        navigate("/auth/signin");
+
+      localStorage.removeItem("userAccessToken");
+      localStorage.removeItem("userRefreshToken");
+      localStorage.removeItem("userNickname");
+      localStorage.removeItem("userAvatar");
+    }
+  };
+
   const handleAddBucket = () => {
     const loginCheck = localStorage.getItem("userAccessToken");
     if (loginCheck) {
@@ -117,12 +134,13 @@ export default function useMypage() {
         localStorage.getItem("userAccessToken")
       )}`;
       setIsLoading(true);
-      const { data } = await getData(`board/myposts?${query}`, {
+      const { data, status } = await getData(`board/myposts?${query}`, {
         headers: {
           Authorization: token,
         },
       });
 
+      status === 200 && setReqCount(0);
       if (data.content?.length > 0) {
         if (data.last) {
           //마지막페이지 검증로직
@@ -138,8 +156,10 @@ export default function useMypage() {
       setIsLoading(false);
     } catch (error) {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
-        homeCardReq(`${homePage.key + 0}`);
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          homeCardReq(`${homePage.key + 0}`);
+        });
       } else {
         console.error("error발생", error);
       }
@@ -244,15 +264,18 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       homeCardDetailReq(bucketDetailData.boardId);
       homeCardRenewal();
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
-        detailLikeAndScrapReq.mutate(
-          `${homeCardDetailData.boardId}/${clickButtonType}`
-        );
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          detailLikeAndScrapReq.mutate(
+            `${homeCardDetailData.boardId}/${clickButtonType}`
+          );
+        });
       } else {
         console.error("error발생", error);
       }
@@ -288,13 +311,16 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       alert("버킷이 삭제 되었습니다!");
       homeCardRenewal();
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
-        bucketDelete.mutate(curBoardId);
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          bucketDelete.mutate(curBoardId);
+        });
       } else {
         console.error("error발생", error);
       }
@@ -320,14 +346,17 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       alert("버킷이 삭제 되었습니다!");
       handleDetailModalState();
       homeCardRenewal();
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
-        homeDetailBucketDelete.mutate(homeCardDetailData.boardId);
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          homeDetailBucketDelete.mutate(homeCardDetailData.boardId);
+        });
       } else {
         console.error("error발생", error);
       }
@@ -354,14 +383,17 @@ export default function useMypage() {
     },
     onSuccess: async (res) => {
       //console.log(res);
+      setReqCount(0);
       homeCardRenewal();
       alert("버킷을 달성하셨습니다!");
     },
     onError: (error) => {
       const { response } = error;
       if (response.status === 401) {
-        tokenRequest.mutate();
-        bucketComplete.mutate(curBoardId);
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          bucketComplete.mutate(curBoardId);
+        });
       } else if (response.status === 409) {
         alert("이미 달성한 버킷입니다!");
       } else {
@@ -389,14 +421,17 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       homeCardDetailReq(bucketDetailData.boardId);
       homeCardRenewal();
     },
     onError: (error) => {
       const { response } = error;
       if (response.status === 401) {
-        tokenRequest.mutate();
-        homeDetailBucketComplete.mutate(homeCardDetailData.boardId);
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          homeDetailBucketComplete.mutate(homeCardDetailData.boardId);
+        });
       } else if (response.status === 409) {
         alert("이미 달성한 버킷입니다!");
       } else {
@@ -432,6 +467,8 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
+
       alert("버킷을 수정 했습니다!");
 
       homeCardRenewal();
@@ -439,8 +476,10 @@ export default function useMypage() {
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
-        bucketChange.mutate({ formData: curFormData, boardId: curBoardId });
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          bucketChange.mutate({ formData: curFormData, boardId: curBoardId });
+        });
       } else {
         console.error("error발생", error);
       }
@@ -460,6 +499,7 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       alert("버킷을 수정 했습니다!");
 
       homeCardDetailReq(bucketDetailData.boardId);
@@ -468,10 +508,12 @@ export default function useMypage() {
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
-        detailBucketChange.mutate({
-          formData: curFormData,
-          boardId: homeCardDetailData.boardId,
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          detailBucketChange.mutate({
+            formData: curFormData,
+            boardId: homeCardDetailData.boardId,
+          });
         });
       } else {
         console.error("error발생", error);
