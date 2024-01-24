@@ -28,7 +28,24 @@ export default function useBucketOptions() {
   const [commentDeleteButton, setCommentDeleteButton] = useState(false);
   const [curEventCommentId, setCurEventCommentId] = useState(null);
 
+  const [reqCount, setReqCount] = useState(0);
+
   const commentCreateInput = useRef();
+
+  const requestRetry = (callback) => {
+    if (reqCount < 2) {
+      tokenRequest.mutate();
+      callback();
+    } else {
+      alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
+        navigate("/auth/signin");
+
+      localStorage.removeItem("userAccessToken");
+      localStorage.removeItem("userRefreshToken");
+      localStorage.removeItem("userNickname");
+      localStorage.removeItem("userAvatar");
+    }
+  };
 
   const handleChange = (e) => {
     setCommentValue(e.target.value);
@@ -57,6 +74,7 @@ export default function useBucketOptions() {
       });
     },
     onSuccess: async (res) => {
+      setReqCount(0);
       handleCurCommentDel();
       alert(res.data.message);
       const { data } = await getData(`board/${bucketDetailData.boardId}`);
@@ -79,10 +97,12 @@ export default function useBucketOptions() {
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
-        createCommentReq.mutate({
-          boardId: bucketDetailData.boardId,
-          content: JSON.stringify({ content: commentValue }),
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          createCommentReq.mutate({
+            boardId: bucketDetailData.boardId,
+            content: JSON.stringify({ content: commentValue }),
+          });
         });
       } else {
         console.error("error발생", error);
@@ -117,6 +137,7 @@ export default function useBucketOptions() {
       });
     },
     onSuccess: async (res) => {
+      setReqCount(0);
       alert(res.data.message);
       const { data } = await getData(`board/${bucketDetailData.boardId}`);
       data.commentList.forEach((obj) => (obj.putOptions = false));
@@ -138,10 +159,12 @@ export default function useBucketOptions() {
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
-        commentDelReq.mutate({
-          boardId: bucketDetailData.boardId,
-          commentId: curEventCommentId,
+        setReqCount((prev) => prev + 1);
+        requestRetry(() => {
+          commentDelReq.mutate({
+            boardId: bucketDetailData.boardId,
+            commentId: curEventCommentId,
+          });
         });
       } else {
         console.error("error발생", error);
