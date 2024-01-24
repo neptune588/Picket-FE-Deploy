@@ -148,13 +148,13 @@ export default function useMyProfile() {
       tokenRequest.mutate();
       callback();
     } else {
-      alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
-        navigate("/auth/signin");
-
       localStorage.removeItem("userAccessToken");
       localStorage.removeItem("userRefreshToken");
       localStorage.removeItem("userNickname");
       localStorage.removeItem("userAvatar");
+
+      alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
+        navigate("/auth/signin");
     }
   };
 
