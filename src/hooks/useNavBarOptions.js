@@ -46,6 +46,7 @@ export default function useNavBarOptions() {
   const [keywordListData, setKeywordListData] = useState([]);
   const [latestDetailCard, setLatestDetailCard] = useState({});
   const [clickButtonType, setClickButtonType] = useState(null);
+  const [reqCount, setReqCount] = useState(0);
 
   const searchTextBar = useRef();
   const mounted04 = useRef(false);
@@ -67,8 +68,6 @@ export default function useNavBarOptions() {
     localStorage.removeItem("userId");
     localStorage.removeItem("userNickname");
     localStorage.removeItem("userAvatar");
-
-    setUserNickName("");
   };
 
   const handleNavigate = (params) => {
@@ -196,6 +195,7 @@ export default function useNavBarOptions() {
       });
     },
     onSuccess: async () => {
+      setReqCount(0);
       handleDetailCardReq(bucketDetailData.boardId);
       const { data } = await getData(
         `board/list/search?size=${page.value * 8 + 8}${
@@ -209,8 +209,19 @@ export default function useNavBarOptions() {
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        tokenRequest.mutate();
-        detailLikeAndScrapReq(`${latestDetailCard}/${clickButtonType}`);
+        setReqCount((prev) => prev + 1);
+        if (reqCount < 2) {
+          tokenRequest.mutate();
+          detailLikeAndScrapReq(`${latestDetailCard}/${clickButtonType}`);
+        } else {
+          localStorage.removeItem("userAccessToken");
+          localStorage.removeItem("userRefreshToken");
+          localStorage.removeItem("userNickname");
+          localStorage.removeItem("userAvatar");
+
+          alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
+            navigate("/auth/signin");
+        }
       } else {
         console.error("error발생", error);
       }
