@@ -44,7 +44,7 @@ export default function Browse() {
               : "/images/default_profile.png"
           }
           title={CardDetailData.title}
-          cardImg={CardDetailData.cardImg}
+          cardImg={CardDetailData.cardImg || "/images/not_image.jpg"}
           cardContent={CardDetailData.cardContent}
           cardCreated={CardDetailData.created}
           heartCount={CardDetailData.heartCount}
@@ -98,10 +98,8 @@ export default function Browse() {
                     ? card.title.substring(0, titleViewLength) + "..."
                     : card.title
                 }
-                thumnailSrc={card.filepath}
-                avatarSrc={
-                  card.filename ? card.filename : "/images/default_profile.png"
-                }
+                thumnailSrc={card.filepath || "/images/not_image.jpg"}
+                avatarSrc={card.profileUrl || "/images/default_profile.png"}
                 nickname={
                   card.nickname?.length > nicknameViewLength
                     ? card.nickname.substring(0, nicknameViewLength) + "..."

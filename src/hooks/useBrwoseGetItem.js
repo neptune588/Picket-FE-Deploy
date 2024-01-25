@@ -69,8 +69,7 @@ export default function useBrwoseGetItem() {
   const [CardDetailData, setCardDetailData] = useState({});
   //토큰 재요청시 정보 저장해놓기 위해 (좋아요인가 스크랩인가)
   const [clickButtonType, setClickButtonType] = useState(null);
-  //재귀 무한 반복 중지 카운트
-  const [reqCount, setReqCount] = useState(0);
+
   //첫 렌더링시 강제실행 막기
   const mounted01 = useRef(false);
   const mounted02 = useRef(false);
@@ -107,18 +106,20 @@ export default function useBrwoseGetItem() {
     },
   });
 
-  const requestRetry = (callback) => {
-    if (reqCount < 2) {
+  const errorHandle = (error, callback) => {
+    if (error.response.status === 401) {
       tokenRequest.mutate();
       callback();
-    } else {
-      alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
-        navigate("/auth/signin");
-
+    } else if (error.response.status === 400) {
       localStorage.removeItem("userAccessToken");
       localStorage.removeItem("userRefreshToken");
       localStorage.removeItem("userNickname");
       localStorage.removeItem("userAvatar");
+
+      alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
+        navigate("/auth/signin");
+    } else {
+      console.error("error발생", error);
     }
   };
 
@@ -204,7 +205,7 @@ export default function useBrwoseGetItem() {
       setIsLoading(true);
       const { data } = await getData(`board/list/search?${query}`);
 
-      //console.log(data);
+      console.log(data);
 
       if (data.content?.length > 0) {
         if (data.last) {
@@ -294,7 +295,6 @@ export default function useBrwoseGetItem() {
       });
     },
     onSuccess: async () => {
-      setReqCount(0);
       //페이지는 0부터 8개이기때문에 8을 더해줘야 내가 내린만큼 나옴.
       //ex 0 1 2 3 총 스크롤 4번내려서 32개의 아이템이 받아지지만
       //page * 3을하면 24개가됨 따라서 8을 더해줘야 하는것
@@ -310,14 +310,9 @@ export default function useBrwoseGetItem() {
     },
 
     onError: (error) => {
-      if (error.response.status === 401) {
-        setReqCount((prev) => prev + 1);
-        requestRetry(() => {
-          likeAndScrapReq.mutate(`${curBoardId}/${clickButtonType}`);
-        });
-      } else {
-        console.error("error발생", error);
-      }
+      errorHandle(error, () => {
+        likeAndScrapReq.mutate(`${curBoardId}/${clickButtonType}`);
+      });
     },
   });
 
@@ -360,7 +355,6 @@ export default function useBrwoseGetItem() {
       });
     },
     onSuccess: async () => {
-      setReqCount(0);
       cardDetailReq(bucketDetailData.boardId);
       try {
         const { data } = await getData(
@@ -375,16 +369,11 @@ export default function useBrwoseGetItem() {
       }
     },
     onError: (error) => {
-      if (error.response.status === 401) {
-        setReqCount((prev) => prev + 1);
-        requestRetry(() => {
-          detailLikeAndScrapReq.mutate(
-            `${CardDetailData.boardId}/${clickButtonType}`
-          );
-        });
-      } else {
-        console.error("error발생", error);
-      }
+      errorHandle(error, () => {
+        detailLikeAndScrapReq.mutate(
+          `${CardDetailData.boardId}/${clickButtonType}`
+        );
+      });
     },
   });
 

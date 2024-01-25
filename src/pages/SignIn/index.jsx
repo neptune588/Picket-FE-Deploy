@@ -12,7 +12,6 @@ import {
   Title,
   InputBox,
   TotalErrorMsg,
-  SocialLogin,
   UserAuthBox,
 } from "@/pages/SignIn/style";
 
@@ -61,19 +60,6 @@ export default function SignIn() {
           </InputBox>
           <InputBox>
             <SubmitButton width={"400px"} value={"로그인"} />
-          </InputBox>
-          <InputBox>
-            <SocialLogin
-              onClick={() =>
-                window.open(
-                  "https://picket.store/oauth2/authorization/google",
-                  "noopener",
-                  "_blank"
-                )
-              }
-            >
-              Google 로그인
-            </SocialLogin>
           </InputBox>
           {errors.submitErrorMsg && (
             <TotalErrorMsg>{errors.submitErrorMsg}</TotalErrorMsg>

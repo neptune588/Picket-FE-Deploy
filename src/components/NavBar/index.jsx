@@ -16,7 +16,6 @@ import {
   CloseButton,
   CloseCrossIcon,
   AlarmBox,
-  AlarmIcon,
   ProfileWrapper,
   ProfileBox,
   Dropdown,
@@ -70,7 +69,7 @@ export default function NavBar() {
           cardImg={
             latestDetailCard.cardImg
               ? latestDetailCard.cardImg
-              : "/images/default_profile.png"
+              : "/images/not_image.jpg"
           }
           cardContent={latestDetailCard.cardContent}
           commentList={latestDetailCard.commentList}
@@ -79,14 +78,8 @@ export default function NavBar() {
           scrapCount={latestDetailCard.scrapCount}
           isCompleted={latestDetailCard.isCompleted}
           putModalOptions={false}
-          handleHeartClick={handleDetailHeartAndScrapClick(
-            "heart",
-            latestDetailCard.boardId
-          )}
-          handleScrapClick={handleDetailHeartAndScrapClick(
-            "scrap",
-            latestDetailCard.boardId
-          )}
+          handleHeartClick={handleDetailHeartAndScrapClick("heart")}
+          handleScrapClick={handleDetailHeartAndScrapClick("scrap")}
           modalCloseHandle={handleNavDetailModalState}
         />
       )}
@@ -192,10 +185,14 @@ export default function NavBar() {
                             ? card.title.substring(0, titleViewLength) + "..."
                             : card.title
                         }
-                        thumnailSrc={card.filepath}
+                        thumnailSrc={
+                          card.filepath ||
+                          card.bucketImg ||
+                          "/images/not_image.jpg"
+                        }
                         avatarSrc={
-                          card.filename
-                            ? card.filename
+                          card.profileUrl
+                            ? card.profileUrl
                             : "/images/default_profile.png"
                         }
                         nickname={
@@ -208,7 +205,9 @@ export default function NavBar() {
                         likeCount={card.likeCount}
                         scrapCount={card.scrapCount}
                         isCompleted={card.isCompleted}
-                        handleDetailView={handleDetailCardReq(card.boardId)}
+                        handleDetailView={() => {
+                          handleDetailCardReq(card.boardId);
+                        }}
                       />
                     )
                   )

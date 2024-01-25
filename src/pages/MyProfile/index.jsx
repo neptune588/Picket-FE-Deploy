@@ -98,7 +98,7 @@ export default function MyProfile() {
               : "/images/default_profile.png"
           }
           title={profileCardDetailData.title}
-          cardImg={profileCardDetailData.cardImg}
+          cardImg={profileCardDetailData.cardImg || "/images/not_image.jpg"}
           cardContent={profileCardDetailData.cardContent}
           commentList={profileCardDetailData.commentList}
           cardCreated={profileCardDetailData.created}

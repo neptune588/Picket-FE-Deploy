@@ -33,7 +33,6 @@ export default function useAddBucket() {
     return data;
   });
   const [curFormData, setCurFormData] = useState(null);
-  const [reqCount, setReqCount] = useState(0);
 
   const handleCategoryClick = (activeNumber, queryNumber) => {
     return () => {
@@ -90,25 +89,21 @@ export default function useAddBucket() {
       });
     },
     onSuccess: async (res) => {
-      setReqCount(0);
       alert(res.data.message);
       navigate("/");
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        setReqCount((prev) => prev + 1);
-        if (reqCount < 2) {
-          tokenRequest.mutate();
-          bucketCreate.mutate(curFormData);
-        } else {
-          localStorage.removeItem("userAccessToken");
-          localStorage.removeItem("userRefreshToken");
-          localStorage.removeItem("userNickname");
-          localStorage.removeItem("userAvatar");
+        tokenRequest.mutate();
+        bucketCreate.mutate(curFormData);
+      } else if (error.response.status === 400) {
+        localStorage.removeItem("userAccessToken");
+        localStorage.removeItem("userRefreshToken");
+        localStorage.removeItem("userNickname");
+        localStorage.removeItem("userAvatar");
 
-          alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
-            navigate("/auth/signin");
-        }
+        alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
+          navigate("/auth/signin");
       } else {
         console.error("error");
       }

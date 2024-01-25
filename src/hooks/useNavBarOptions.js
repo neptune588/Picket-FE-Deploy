@@ -29,9 +29,7 @@ export default function useNavBarOptions() {
   const {
     searchModal,
     navDetailModal,
-    page,
     keyword,
-    categoryList,
     bucketDetailData,
     navActiveNumber,
   } = useSelectorList();
@@ -46,7 +44,6 @@ export default function useNavBarOptions() {
   const [keywordListData, setKeywordListData] = useState([]);
   const [latestDetailCard, setLatestDetailCard] = useState({});
   const [clickButtonType, setClickButtonType] = useState(null);
-  const [reqCount, setReqCount] = useState(0);
 
   const searchTextBar = useRef();
   const mounted04 = useRef(false);
@@ -65,9 +62,11 @@ export default function useNavBarOptions() {
   const handleSignOut = () => {
     dispatch(deleteHomeThumnailCard());
     localStorage.removeItem("userAccessToken");
-    localStorage.removeItem("userId");
+    localStorage.removeItem("userRefreshToken");
     localStorage.removeItem("userNickname");
     localStorage.removeItem("userAvatar");
+
+    setUserNickName("");
   };
 
   const handleNavigate = (params) => {
@@ -147,40 +146,33 @@ export default function useNavBarOptions() {
     };
   };
 
-  const handleDetailCardReq = (boardNum) => {
-    return async () => {
-      try {
-        const { data } = await getData(`board/${boardNum}`);
-        data.commentList.forEach((obj) => (obj.putOptions = false));
+  const handleDetailCardReq = async (boardId) => {
+    try {
+      const { data } = await getData(`board/${boardId}`);
+      data.commentList.forEach((obj) => (obj.putOptions = false));
+      const latestCard = JSON.parse(localStorage.getItem("latestBucket"));
+      dispatch(
+        setDetailButcket({
+          boardId: data.boardId,
+          title: data.title,
+          categoryList: data.categoryList,
+          cardContent: data.content,
+          cardImg: data.filepath,
+          created: data.deadline.split("-").join("."),
+          commentList: data.commentList,
+          heartCount: data.heartCount,
+          scrapCount: data.scrapCount,
+          nickname: data.nickname,
+          avatar: data.profileImg,
+          isCompleted: latestCard.find((card) => card.boardId === data.boardId)
+            .isCompleted,
+        })
+      );
 
-        const latestCard = JSON.parse(localStorage.getItem("latestBucket"));
-
-        dispatch(
-          setDetailButcket({
-            boardId: data.boardId,
-            title: data.title,
-            categoryList: data.categoryList,
-            cardContent: data.content,
-            cardImg: data.filepath,
-            created: data.deadline.split("-").join("."),
-            commentList: data.commentList,
-            heartCount: data.heartCount,
-            scrapCount: data.scrapCount,
-            nickname: data.nickname,
-            avatar: data.profileImg,
-            isCompleted: latestCard.find(
-              (card) => card.boardId === data.boardId
-            ).isCompleted,
-          })
-        );
-        setLatestDetailCard(bucketDetailData);
-
-        handleNavDetailModalState();
-        //console.log(data);
-      } catch (error) {
-        console.error("error발생", error);
-      }
-    };
+      !navDetailModal && handleNavDetailModalState();
+    } catch (error) {
+      console.error("error발생", error);
+    }
   };
 
   const detailLikeAndScrapReq = useMutation({
@@ -195,40 +187,27 @@ export default function useNavBarOptions() {
       });
     },
     onSuccess: async () => {
-      setReqCount(0);
-      handleDetailCardReq(bucketDetailData.boardId);
-      const { data } = await getData(
-        `board/list/search?size=${page.value * 8 + 8}${
-          keyword.key + keyword.value
-        }${categoryList.key + categoryList.value}`
-      );
-      dispatch(deleteThumnailCard());
-      dispatch(deleteHomeThumnailCard());
-
-      dispatch(setThumnailCard(data.content));
+      handleDetailCardReq(latestDetailCard.boardId);
     },
     onError: (error) => {
       if (error.response.status === 401) {
-        setReqCount((prev) => prev + 1);
-        if (reqCount < 2) {
-          tokenRequest.mutate();
-          detailLikeAndScrapReq(`${latestDetailCard}/${clickButtonType}`);
-        } else {
-          localStorage.removeItem("userAccessToken");
-          localStorage.removeItem("userRefreshToken");
-          localStorage.removeItem("userNickname");
-          localStorage.removeItem("userAvatar");
+        tokenRequest.mutate();
+        detailLikeAndScrapReq(`${latestDetailCard.boardId}/${clickButtonType}`);
+      } else if (error.response.status === 400) {
+        localStorage.removeItem("userAccessToken");
+        localStorage.removeItem("userRefreshToken");
+        localStorage.removeItem("userNickname");
+        localStorage.removeItem("userAvatar");
 
-          alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
-            navigate("/auth/signin");
-        }
+        alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
+          navigate("/auth/signin");
       } else {
         console.error("error발생", error);
       }
     },
   });
 
-  const handleDetailHeartAndScrapClick = (type, curBoardId) => {
+  const handleDetailHeartAndScrapClick = (type) => {
     return () => {
       const condition = localStorage.getItem("userAccessToken");
       if (!condition) {
@@ -241,12 +220,12 @@ export default function useNavBarOptions() {
         switch (type) {
           case "heart": {
             setClickButtonType("like");
-            detailLikeAndScrapReq.mutate(`${curBoardId}/like`);
+            detailLikeAndScrapReq.mutate(`${latestDetailCard.boardId}/like`);
             break;
           }
           case "scrap": {
             setClickButtonType("scrap");
-            detailLikeAndScrapReq.mutate(`${curBoardId}/scrap`);
+            detailLikeAndScrapReq.mutate(`${latestDetailCard.boardId}/scrap`);
             break;
           }
         }

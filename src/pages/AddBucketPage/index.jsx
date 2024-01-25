@@ -109,7 +109,7 @@ export default function AddBucketPage() {
                 <InputBox>
                   <h2>설명</h2>
                   <InputTextArea
-                    maxLength={90}
+                    maxLength={210}
                     value={valueData.bucketContent}
                     name={"bucketContent"}
                     placeholder={"내용을 입력하세요."}

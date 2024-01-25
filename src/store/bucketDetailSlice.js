@@ -43,7 +43,7 @@ const bucketDetailSlice = createSlice({
 
       bucketDetailData.isCompleted = bucketData.isCompleted;
 
-      console.log(bucketData);
+      //console.log(bucketData);
     },
     setScrollLocation(state, action) {
       const { payload: scrollY } = action;
