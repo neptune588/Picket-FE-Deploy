@@ -247,7 +247,7 @@ export default function useMyProfile() {
           categoryList: data.categoryList,
           cardContent: data.content,
           cardImg: data.filepath,
-          created: data.deadline.split("-").join("."),
+          created: data.deadline.join("."),
           commentList: data.commentList,
           heartCount: data.heartCount,
           scrapCount: data.scrapCount,
