@@ -205,8 +205,6 @@ export default function useBrwoseGetItem() {
       setIsLoading(true);
       const { data } = await getData(`board/list/search?${query}`);
 
-      console.log(data);
-
       if (data.content?.length > 0) {
         if (data.last) {
           //마지막페이지 검증로직
@@ -271,7 +269,6 @@ export default function useBrwoseGetItem() {
 
   const handleDetailView = (curBoardId) => {
     return () => {
-      console.log("디테일 실행 오류 테스트");
       dispatch(setScrollLocation(window.scrollY));
       cardDetailReq(curBoardId);
     };
