@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://picket.store/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
     }
   ]
 }
