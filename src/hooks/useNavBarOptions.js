@@ -150,6 +150,9 @@ export default function useNavBarOptions() {
     try {
       const { data } = await getData(`board/${boardId}`);
       data.commentList.forEach((obj) => (obj.putOptions = false));
+
+      data.deadline[1] = String(data.deadline[1]).padStart(2, 0);
+      data.deadline[2] = String(data.deadline[2]).padStart(2, 0);
       const latestCard = JSON.parse(localStorage.getItem("latestBucket"));
       dispatch(
         setDetailButcket({

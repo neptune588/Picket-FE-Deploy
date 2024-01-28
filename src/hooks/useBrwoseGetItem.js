@@ -228,6 +228,8 @@ export default function useBrwoseGetItem() {
       const { data } = await getData(`board/${borardNum}`);
       data.commentList.forEach((obj) => (obj.putOptions = false));
 
+      data.deadline[1] = String(data.deadline[1]).padStart(2, 0);
+      data.deadline[2] = String(data.deadline[2]).padStart(2, 0);
       dispatch(
         setDetailButcket({
           boardId: data.boardId,
