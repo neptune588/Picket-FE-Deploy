@@ -42,9 +42,9 @@ const bucketThumnailSlice = createSlice({
               String(date.getDate()).padStart(2, 0);
 
             const today = new Date(compareDate); // 20240107
-            const deadlineDate = new Date(obj.deadline); // 20240106
+            const deadlineDate = new Date(obj.deadline.join("-")); // 20240106
 
-            obj.Dday = Math.floor(today - deadlineDate / (1000 * 60 * 60 * 24));
+            obj.Dday = today - deadlineDate / (1000 * 60 * 60 * 24);
             obj.putOptions = false;
           });
 

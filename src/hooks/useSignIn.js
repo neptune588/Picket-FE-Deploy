@@ -56,7 +56,6 @@ export default function useSignIn() {
         "userRefreshToken",
         JSON.stringify(tokenData.refreshToken)
       );
-      localStorage.setItem("userId", JSON.stringify(tokenData.memberId));
       localStorage.setItem("userNickname", JSON.stringify(tokenData.nickname));
       localStorage.setItem("userAvatar", JSON.stringify(tokenData.profileUrl));
       setValues({ userLoginEmail: "", userLoginPassword: "" });
