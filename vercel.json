@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://picket-fe-deploy.vercel.app/:path*"
+      "destination": "https://picket.store/:path*"
     }
   ]
 }
