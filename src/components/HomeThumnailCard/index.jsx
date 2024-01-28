@@ -20,7 +20,6 @@ import { setHomeThumnailPutModalState } from "@/store/bucketThumnailSlice";
 import ThumnailImg from "@/components/ThumnailImg/ThumnailImg";
 
 export default function HomeThumnailCard({
-  boardId,
   title,
   content,
   deadline,
@@ -35,9 +34,6 @@ export default function HomeThumnailCard({
   Dday = null,
   DdayViewState = null,
   isCompleted,
-  /*   avatar,
-  isFinish,
-  isProgress, */
 }) {
   const dispatch = useDispatch();
 

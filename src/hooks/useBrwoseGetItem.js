@@ -271,6 +271,7 @@ export default function useBrwoseGetItem() {
 
   const handleDetailView = (curBoardId) => {
     return () => {
+      console.log("디테일 실행 오류 테스트");
       dispatch(setScrollLocation(window.scrollY));
       cardDetailReq(curBoardId);
     };
