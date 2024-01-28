@@ -1,3 +1,9 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" },
+    {
+      "source": "/api/:path*",
+      "destination": "https://picket-fe-deploy.vercel.app/:path*"
+    }
+  ]
 }
