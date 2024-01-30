@@ -387,6 +387,7 @@ export default function useMypage() {
     },
     onSuccess: async () => {
       homeCardDetailReq(bucketDetailData.boardId);
+      alert("버킷을 달성하셨습니다!");
       homeCardRenewal();
     },
     onError: (error) => {

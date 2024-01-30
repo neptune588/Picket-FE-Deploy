@@ -222,7 +222,7 @@ export default function BucketCard({
                   <CommentUserAvatar>
                     <img
                       src={
-                        localStorage.getItem("userAvatar")
+                        JSON.parse(localStorage.getItem("userAvatar"))
                           ? JSON.parse(localStorage.getItem("userAvatar"))
                           : "/images/default_profile.png"
                       }
