@@ -51,6 +51,8 @@ export default function useBucketOptions() {
 
       alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
         navigate("/auth/signin");
+    } else if (error.response.status === 403) {
+      alert("권한이 없습니다!");
     } else {
       console.error("error발생", error);
     }
