@@ -69,6 +69,7 @@ export default function useBrwoseGetItem() {
   const [CardDetailData, setCardDetailData] = useState({});
   //토큰 재요청시 정보 저장해놓기 위해 (좋아요인가 스크랩인가)
   const [clickButtonType, setClickButtonType] = useState(null);
+  const [recursiveCount, setRecursiveCount] = useState(0);
 
   //첫 렌더링시 강제실행 막기
   const mounted01 = useRef(false);
@@ -107,7 +108,15 @@ export default function useBrwoseGetItem() {
   });
 
   const errorHandle = (error, callback) => {
-    if (error.response.status === 401) {
+    if (recursiveCount >= 2) {
+      localStorage.removeItem("userAccessToken");
+      localStorage.removeItem("userRefreshToken");
+      localStorage.removeItem("userNickname");
+      localStorage.removeItem("userAvatar");
+
+      alert("권한이 없습니다. 다시 로그인 해주세요!");
+      navigate("/auth/signin");
+    } else if (error.response.status === 401) {
       tokenRequest.mutate();
       callback();
     } else if (error.response.status === 400) {
@@ -227,7 +236,7 @@ export default function useBrwoseGetItem() {
     try {
       const { data } = await getData(`board/${borardNum}`);
       data.commentList.forEach((obj) => (obj.putOptions = false));
-
+      console.log(data);
       data.deadline[1] = String(data.deadline[1]).padStart(2, 0);
       data.deadline[2] = String(data.deadline[2]).padStart(2, 0);
       dispatch(
@@ -243,8 +252,7 @@ export default function useBrwoseGetItem() {
           scrapCount: data.scrapCount,
           nickname: data.nickname,
           avatar: data.profileImg,
-          isCompleted: cardData.find((card) => card.boardId === borardNum)
-            .isCompleted,
+          isCompleted: data.isCompleted,
         })
       );
 
@@ -295,6 +303,7 @@ export default function useBrwoseGetItem() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       //페이지는 0부터 8개이기때문에 8을 더해줘야 내가 내린만큼 나옴.
       //ex 0 1 2 3 총 스크롤 4번내려서 32개의 아이템이 받아지지만
       //page * 3을하면 24개가됨 따라서 8을 더해줘야 하는것
@@ -310,6 +319,7 @@ export default function useBrwoseGetItem() {
     },
 
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         likeAndScrapReq.mutate(`${curBoardId}/${clickButtonType}`);
       });
@@ -355,6 +365,7 @@ export default function useBrwoseGetItem() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       cardDetailReq(bucketDetailData.boardId);
       try {
         const { data } = await getData(
@@ -369,6 +380,7 @@ export default function useBrwoseGetItem() {
       }
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         detailLikeAndScrapReq.mutate(
           `${CardDetailData.boardId}/${clickButtonType}`

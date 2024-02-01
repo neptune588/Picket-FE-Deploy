@@ -65,6 +65,7 @@ export default function useMypage() {
   //토큰 재요청시 정보 저장해놓기 위해 (좋아요인가 스크랩인가)
   const [clickButtonType, setClickButtonType] = useState(null);
   const [curFormData, setCurFormData] = useState(null);
+  const [recursiveCount, setRecursiveCount] = useState(0);
 
   const homeMouted01 = useRef();
   const homeMouted02 = useRef();
@@ -102,7 +103,15 @@ export default function useMypage() {
   });
 
   const errorHandle = (error, callback) => {
-    if (error.response.status === 401) {
+    if (recursiveCount >= 2) {
+      localStorage.removeItem("userAccessToken");
+      localStorage.removeItem("userRefreshToken");
+      localStorage.removeItem("userNickname");
+      localStorage.removeItem("userAvatar");
+
+      alert("권한이 없습니다. 다시 로그인 해주세요!");
+      navigate("/auth/signin");
+    } else if (error.response.status === 401) {
       tokenRequest.mutate();
       callback();
     } else if (error.response.status === 400) {
@@ -140,6 +149,7 @@ export default function useMypage() {
         },
       });
 
+      setRecursiveCount(0);
       if (data.content?.length > 0) {
         if (data.last) {
           //마지막페이지 검증로직
@@ -154,6 +164,7 @@ export default function useMypage() {
       }
       setIsLoading(false);
     } catch (error) {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         homeCardReq(`${homePage.key + 0}`);
       });
@@ -201,8 +212,7 @@ export default function useMypage() {
           scrapCount: data.scrapCount,
           nickname: data.nickname,
           avatar: data.profileImg,
-          isCompleted: homeCardData.find((card) => card.boardId === borardNum)
-            .isCompleted,
+          isCompleted: data.isCompleted,
         })
       );
 
@@ -256,10 +266,12 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       homeCardDetailReq(bucketDetailData.boardId);
       homeCardRenewal();
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         detailLikeAndScrapReq.mutate(
           `${homeCardDetailData.boardId}/${clickButtonType}`
@@ -297,10 +309,12 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       alert("버킷이 삭제 되었습니다!");
       homeCardRenewal();
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         bucketDelete.mutate(curBoardId);
       });
@@ -326,11 +340,13 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       alert("버킷이 삭제 되었습니다!");
       handleDetailModalState();
       homeCardRenewal();
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         homeDetailBucketDelete.mutate(homeCardDetailData.boardId);
       });
@@ -356,11 +372,13 @@ export default function useMypage() {
       });
     },
     onSuccess: async (res) => {
+      setRecursiveCount(0);
       //console.log(res);
       homeCardRenewal();
       alert("버킷을 달성하셨습니다!");
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         bucketComplete.mutate(curBoardId);
       });
@@ -386,11 +404,13 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       homeCardDetailReq(bucketDetailData.boardId);
       alert("버킷을 달성하셨습니다!");
       homeCardRenewal();
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         homeDetailBucketComplete.mutate(homeCardDetailData.boardId);
       });
@@ -424,12 +444,14 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       alert("버킷을 수정 했습니다!");
 
       homeCardRenewal();
       handleBucketChangeModalState();
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         bucketChange.mutate({ formData: curFormData, boardId: curBoardId });
       });
@@ -449,6 +471,7 @@ export default function useMypage() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       alert("버킷을 수정 했습니다!");
 
       homeCardDetailReq(bucketDetailData.boardId);
@@ -456,6 +479,7 @@ export default function useMypage() {
       handleBucketChangeModalState();
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         detailBucketChange.mutate({
           formData: curFormData,

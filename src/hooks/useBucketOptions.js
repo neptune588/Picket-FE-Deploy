@@ -27,11 +27,20 @@ export default function useBucketOptions() {
   const [putModal, setPutModal] = useState(false);
   const [commentDeleteButton, setCommentDeleteButton] = useState(false);
   const [curEventCommentId, setCurEventCommentId] = useState(null);
+  const [recursiveCount, setRecursiveCount] = useState(0);
 
   const commentCreateInput = useRef();
 
   const errorHandle = (error, callback) => {
-    if (error.response.status === 401) {
+    if (recursiveCount >= 2) {
+      localStorage.removeItem("userAccessToken");
+      localStorage.removeItem("userRefreshToken");
+      localStorage.removeItem("userNickname");
+      localStorage.removeItem("userAvatar");
+
+      alert("권한이 없습니다. 다시 로그인 해주세요!");
+      navigate("/auth/signin");
+    } else if (error.response.status === 401) {
       tokenRequest.mutate();
       callback();
     } else if (error.response.status === 400) {
@@ -74,6 +83,7 @@ export default function useBucketOptions() {
       });
     },
     onSuccess: async (res) => {
+      setRecursiveCount(0);
       handleCurCommentDel();
       alert(res.data.message);
       const { data } = await getData(`board/${bucketDetailData.boardId}`);
@@ -99,6 +109,7 @@ export default function useBucketOptions() {
       );
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         createCommentReq.mutate({
           boardId: bucketDetailData.boardId,
@@ -135,6 +146,7 @@ export default function useBucketOptions() {
       });
     },
     onSuccess: async (res) => {
+      setRecursiveCount(0);
       alert(res.data.message);
       const { data } = await getData(`board/${bucketDetailData.boardId}`);
       data.commentList.forEach((obj) => (obj.putOptions = false));
@@ -158,6 +170,7 @@ export default function useBucketOptions() {
       );
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         commentDelReq.mutate({
           boardId: bucketDetailData.boardId,

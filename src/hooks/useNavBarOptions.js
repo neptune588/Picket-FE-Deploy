@@ -7,11 +7,7 @@ import { useDispatch } from "react-redux";
 
 import { setKeywordParams } from "@/store/parameterSlice";
 import { setDetailButcket } from "@/store/bucketDetailSlice";
-import {
-  setThumnailCard,
-  deleteThumnailCard,
-  deleteHomeThumnailCard,
-} from "@/store/bucketThumnailSlice";
+import { deleteHomeThumnailCard } from "@/store/bucketThumnailSlice";
 import { setMenuActive } from "@/store/navBarMenuSlice";
 
 import { getData } from "@/services/api";
@@ -44,6 +40,7 @@ export default function useNavBarOptions() {
   const [keywordListData, setKeywordListData] = useState([]);
   const [latestDetailCard, setLatestDetailCard] = useState({});
   const [clickButtonType, setClickButtonType] = useState(null);
+  const [recursiveCount, setRecursiveCount] = useState(0);
 
   const searchTextBar = useRef();
   const mounted04 = useRef(false);
@@ -153,7 +150,6 @@ export default function useNavBarOptions() {
 
       data.deadline[1] = String(data.deadline[1]).padStart(2, 0);
       data.deadline[2] = String(data.deadline[2]).padStart(2, 0);
-      const latestCard = JSON.parse(localStorage.getItem("latestBucket"));
       dispatch(
         setDetailButcket({
           boardId: data.boardId,
@@ -167,8 +163,7 @@ export default function useNavBarOptions() {
           scrapCount: data.scrapCount,
           nickname: data.nickname,
           avatar: data.profileImg,
-          isCompleted: latestCard.find((card) => card.boardId === data.boardId)
-            .isCompleted,
+          isCompleted: data.isCompleted,
         })
       );
 
@@ -190,10 +185,20 @@ export default function useNavBarOptions() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       handleDetailCardReq(latestDetailCard.boardId);
     },
     onError: (error) => {
-      if (error.response.status === 401) {
+      setRecursiveCount((prev) => prev + 1);
+      if (recursiveCount >= 2) {
+        localStorage.removeItem("userAccessToken");
+        localStorage.removeItem("userRefreshToken");
+        localStorage.removeItem("userNickname");
+        localStorage.removeItem("userAvatar");
+
+        alert("권한이 없습니다. 다시 로그인 해주세요!");
+        navigate("/auth/signin");
+      } else if (error.response.status === 401) {
         tokenRequest.mutate();
         detailLikeAndScrapReq(`${latestDetailCard.boardId}/${clickButtonType}`);
       } else if (error.response.status === 400) {
@@ -205,7 +210,7 @@ export default function useNavBarOptions() {
         alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
           navigate("/auth/signin");
       } else {
-        console.error("error발생", error);
+        console.error("error");
       }
     },
   });

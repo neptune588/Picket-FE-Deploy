@@ -33,6 +33,7 @@ export default function useAddBucket() {
     return data;
   });
   const [curFormData, setCurFormData] = useState(null);
+  const [recursiveCount, setRecursiveCount] = useState(0);
 
   const handleCategoryClick = (activeNumber, queryNumber) => {
     return () => {
@@ -89,11 +90,21 @@ export default function useAddBucket() {
       });
     },
     onSuccess: async (res) => {
+      setRecursiveCount(0);
       alert(res.data.message);
       navigate("/");
     },
     onError: (error) => {
-      if (error.response.status === 401) {
+      setRecursiveCount((prev) => prev + 1);
+      if (recursiveCount >= 2) {
+        localStorage.removeItem("userAccessToken");
+        localStorage.removeItem("userRefreshToken");
+        localStorage.removeItem("userNickname");
+        localStorage.removeItem("userAvatar");
+
+        alert("권한이 없습니다. 다시 로그인 해주세요!");
+        navigate("/auth/signin");
+      } else if (error.response.status === 401) {
         tokenRequest.mutate();
         bucketCreate.mutate(curFormData);
       } else if (error.response.status === 400) {

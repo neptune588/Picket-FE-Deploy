@@ -91,6 +91,8 @@ export default function useMyProfile() {
 
   const [clickDataType, setClickDataType] = useState(null);
 
+  const [recursiveCount, setRecursiveCount] = useState(0);
+
   const profileMouted01 = useRef();
   const profileMouted02 = useRef();
   const profileMouted03 = useRef();
@@ -142,7 +144,15 @@ export default function useMyProfile() {
   });
 
   const errorHandle = (error, callback, etcHandle) => {
-    if (error.response.status === 401) {
+    if (recursiveCount >= 2) {
+      localStorage.removeItem("userAccessToken");
+      localStorage.removeItem("userRefreshToken");
+      localStorage.removeItem("userNickname");
+      localStorage.removeItem("userAvatar");
+
+      alert("권한이 없습니다. 다시 로그인 해주세요!");
+      navigate("/auth/signin");
+    } else if (error.response.status === 401) {
       tokenRequest.mutate();
       callback();
     } else if (error.response.status === 400) {
@@ -172,9 +182,11 @@ export default function useMyProfile() {
         },
       });
 
+      setRecursiveCount(0);
       setCompleteCount(data.finishTotal);
       setPregressCount(data.progressTotal);
     } catch (error) {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         profileCompleteCountReq();
       });
@@ -197,6 +209,7 @@ export default function useMyProfile() {
           },
         }
       );
+      setRecursiveCount(0);
       //console.log(data);
       if (Array.isArray(data.content) && data.content.length > 0) {
         data.last && setLastPage(true);
@@ -208,6 +221,7 @@ export default function useMyProfile() {
       }
       setIsLoading(false);
     } catch (error) {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         profileCardDataReq(`${homePage.key + 0}`, clickDataType);
       });
@@ -256,9 +270,7 @@ export default function useMyProfile() {
           scrapCount: data.scrapCount,
           nickname: data.nickname,
           avatar: data.profileImg,
-          isCompleted: profileCardData.find(
-            (card) => card.boardId === borardNum
-          ).isCompleted,
+          isCompleted: data.isCompleted,
         })
       );
 
@@ -326,13 +338,14 @@ export default function useMyProfile() {
       );
     },
     onSuccess: (res) => {
-      console.log(res);
+      setRecursiveCount(0);
       setErrors({
         ...errors,
         nicknameInvaildNotice: "vaild",
       });
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(
         error,
         () => {
@@ -391,6 +404,7 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async (res) => {
+      setRecursiveCount(0);
       localStorage.setItem("userNickname", JSON.stringify(res.data.nickname));
       localStorage.setItem("userAvatar", JSON.stringify(res.data.imageUrl));
 
@@ -398,6 +412,7 @@ export default function useMyProfile() {
       handleProfileModalClose();
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         profileEdit.mutate(curFormData);
       });
@@ -478,10 +493,12 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       alert("버킷이 삭제 되었습니다!");
       cardDataRenewal();
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         bucketDelete.mutate(curBoardId);
       });
@@ -506,11 +523,13 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       alert("버킷이 삭제 되었습니다!");
       handleDetailModalState();
       cardDataRenewal();
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         myDetailBucketDelete.mutate(profileCardDetailData.boardId);
       });
@@ -536,10 +555,12 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       alert("버킷을 달성하셨습니다!");
       cardDataRenewal();
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(
         error,
         () => {
@@ -570,11 +591,13 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       cardDetailReq(bucketDetailData.boardId);
       alert("버킷을 달성하셨습니다!");
       cardDataRenewal();
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(
         error,
         () => {
@@ -606,10 +629,12 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       cardDetailReq(bucketDetailData.boardId);
       cardDataRenewal();
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         MyCardDetailLikeReq.mutate(`${profileCardDetailData.boardId}/like`);
       });
@@ -643,9 +668,11 @@ export default function useMyProfile() {
           }
         );
         //눈속임
+        setRecursiveCount(0);
         dispatch(deleteHomeThumnailCard());
         dispatch(setHomeTumnailCards(data.content));
       } catch (error) {
+        setRecursiveCount((prev) => prev + 1);
         errorHandle(error, () => {
           ScrapCardDetailLikeReq.mutate(
             `${profileCardDetailData.boardId}/like`
@@ -686,12 +713,14 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       alert("버킷을 수정 했습니다!");
 
       cardDataRenewal();
       handleBucketChangeModalState();
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         bucketChange.mutate({
           formData: curFormData,
@@ -714,6 +743,7 @@ export default function useMyProfile() {
       });
     },
     onSuccess: async () => {
+      setRecursiveCount(0);
       alert("버킷을 수정 했습니다!");
 
       cardDetailReq(bucketDetailData.boardId);
@@ -721,6 +751,7 @@ export default function useMyProfile() {
       handleBucketChangeModalState();
     },
     onError: (error) => {
+      setRecursiveCount((prev) => prev + 1);
       errorHandle(error, () => {
         detailBucketChange.mutate({
           formData: curFormData,

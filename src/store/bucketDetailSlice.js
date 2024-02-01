@@ -37,10 +37,6 @@ const bucketDetailSlice = createSlice({
       bucketDetailData.scrapCount = bucketData.scrapCount;
       bucketDetailData.nickname = bucketData.nickname;
       bucketDetailData.avatar = bucketData.avatar;
-      //백단에서 디테일쪽은 completed를안주기떄문에 내가 자체적으로 설정해놨음
-      //코멘트달떄는 isCompleted키밸류를 프론트단에서 못달아주기떄문에
-      // 0이나 1이라는 값이있을때는(존재하면) 그값을 할당 그게 아닌경우에는 그 전의 값을 할당
-
       bucketDetailData.isCompleted = bucketData.isCompleted;
 
       //console.log(bucketData);
