@@ -58,6 +58,7 @@ export default function useSignIn() {
       );
       localStorage.setItem("userNickname", JSON.stringify(tokenData.nickname));
       localStorage.setItem("userAvatar", JSON.stringify(tokenData.profileUrl));
+      localStorage.setItem("userId", JSON.stringify(tokenData.memberId));
       setValues({ userLoginEmail: "", userLoginPassword: "" });
       setErrors({
         emailInvaildNotice: "",

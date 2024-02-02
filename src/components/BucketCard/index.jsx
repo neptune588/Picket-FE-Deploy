@@ -164,24 +164,29 @@ export default function BucketCard({
                       <p>{comment.nickname}</p>
                       <p>{comment.content}</p>
                     </div>
-                    {localStorage.getItem("userAccessToken") && (
-                      <div>
-                        {comment.putOptions ? (
-                          <CommentPutArea>
-                            <li
-                              onClick={handleCommentDelReq(boardId, comment.id)}
-                            >
-                              삭제
-                            </li>
-                            <li onClick={handlePutModal(idx, false)}>취소</li>
-                          </CommentPutArea>
-                        ) : (
-                          <CommentPutButton
-                            onClick={handlePutModal(idx, true)}
-                          />
-                        )}
-                      </div>
-                    )}
+                    {localStorage.getItem("userAccessToken") &&
+                      JSON.parse(localStorage.getItem("userId")) ===
+                        comment.memberId && (
+                        <div>
+                          {comment.putOptions ? (
+                            <CommentPutArea>
+                              <li
+                                onClick={handleCommentDelReq(
+                                  boardId,
+                                  comment.id
+                                )}
+                              >
+                                삭제
+                              </li>
+                              <li onClick={handlePutModal(idx, false)}>취소</li>
+                            </CommentPutArea>
+                          ) : (
+                            <CommentPutButton
+                              onClick={handlePutModal(idx, true)}
+                            />
+                          )}
+                        </div>
+                      )}
                   </Fragment>
                 ))}
               </CommentListBox>

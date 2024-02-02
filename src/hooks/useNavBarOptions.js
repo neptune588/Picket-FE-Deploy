@@ -62,6 +62,7 @@ export default function useNavBarOptions() {
     localStorage.removeItem("userRefreshToken");
     localStorage.removeItem("userNickname");
     localStorage.removeItem("userAvatar");
+    localStorage.removeItem("userId");
 
     setUserNickName("");
   };
@@ -195,6 +196,7 @@ export default function useNavBarOptions() {
         localStorage.removeItem("userRefreshToken");
         localStorage.removeItem("userNickname");
         localStorage.removeItem("userAvatar");
+        localStorage.removeItem("userId");
 
         alert("권한이 없습니다. 다시 로그인 해주세요!");
         navigate("/auth/signin");
@@ -206,6 +208,7 @@ export default function useNavBarOptions() {
         localStorage.removeItem("userRefreshToken");
         localStorage.removeItem("userNickname");
         localStorage.removeItem("userAvatar");
+        localStorage.removeItem("userId");
 
         alert("로그인이 만료되었습니다. 재로그인 하시겠습니까?") &&
           navigate("/auth/signin");
