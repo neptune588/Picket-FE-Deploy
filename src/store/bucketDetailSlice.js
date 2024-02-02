@@ -38,8 +38,6 @@ const bucketDetailSlice = createSlice({
       bucketDetailData.nickname = bucketData.nickname;
       bucketDetailData.avatar = bucketData.avatar;
       bucketDetailData.isCompleted = bucketData.isCompleted;
-
-      console.log(bucketData);
     },
     setScrollLocation(state, action) {
       const { payload: scrollY } = action;
