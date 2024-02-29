@@ -40,7 +40,7 @@ PWSEARCH: 패스워드 재 설정 기능 <br />
 
 ### 사이트 주소
 
-https://picket-fe-deploy.vercel.app/search/default
+사이트 주소: https://picket-fe-deploy.vercel.app/search/default
 
 온라인 스터디라는 한계점에 부딪혀 FE개발자 한 분이 나가시거나 BE개발자 몇 몇분들은 열정적으로 참여 안하시는 등 여러 애로사항이 많았으나, <Br />
 
